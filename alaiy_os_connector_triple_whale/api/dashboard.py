@@ -9,7 +9,13 @@ loads should never burn API quota.
 """
 
 import frappe
-from frappe.utils import add_days, today
+from frappe.utils import add_days, date_diff, today
+
+
+# Below this much spend a ROAS ratio is arithmetic noise: a product that
+# happened to receive a few rupees of impressions next to a large organic sale
+# reads as a spectacular return it did not earn.
+MIN_SPEND_FOR_ROAS = 100.0
 
 
 def _window(days):
@@ -27,22 +33,29 @@ def get_overview(days=30):
         "Triple Whale Daily Metric",
         filters={"metric_date": ["between", [start, end]]},
         fields=[
-            "metric_date", "total_sales", "orders", "spend", "mer",
-            "net_profit", "net_margin", "ncpa", "blended_roas",
+            "metric_date", "total_sales", "order_revenue", "orders", "spend",
+            "mer", "net_profit", "net_margin", "ncpa", "blended_roas",
             "new_customer_revenue", "returning_customer_revenue",
-            "total_refunded_price", "returns_percent",
+            "total_refunded_price", "returns_percent", "gross_profit",
+            "aov", "visitors", "sessions", "site_conversion_rate",
+            "unique_customers", "new_customers_percent",
         ],
         order_by="metric_date asc",
     )
 
     totals = {
         "total_sales": 0.0,
+        "order_revenue": 0.0,
         "orders": 0,
         "spend": 0.0,
         "net_profit": 0.0,
+        "gross_profit": 0.0,
         "new_customer_revenue": 0.0,
         "returning_customer_revenue": 0.0,
         "total_refunded_price": 0.0,
+        "visitors": 0,
+        "sessions": 0,
+        "unique_customers": 0,
     }
     for r in rows:
         for key in totals:
@@ -59,12 +72,57 @@ def get_overview(days=30):
         (totals["total_refunded_price"] / sales * 100) if sales else None
     )
     totals["aov"] = (sales / totals["orders"]) if totals["orders"] else None
+    totals["blended_roas"] = (sales / spend) if spend else None
+    totals["ncpa"] = (
+        (spend / _new_customers(rows)) if _new_customers(rows) else None
+    )
+    totals["site_conversion_rate"] = (
+        (totals["orders"] / totals["sessions"] * 100) if totals["sessions"] else None
+    )
+    nc = totals["new_customer_revenue"]
+    rc = totals["returning_customer_revenue"]
+    totals["new_customer_share"] = (nc / (nc + rc) * 100) if (nc + rc) else None
 
     return {
         "period": {"start": start, "end": end, "days": len(rows)},
         "totals": totals,
         "series": rows,
+        "previous": _previous_totals(start, end),
     }
+
+
+def _new_customers(rows):
+    """Approximate new customers from the share of customers flagged new."""
+    total = 0.0
+    for r in rows:
+        customers = r.get("unique_customers") or 0
+        share = r.get("new_customers_percent")
+        if customers and share is not None:
+            total += customers * float(share) / 100
+    return total
+
+
+def _previous_totals(start, end):
+    """
+    The same span immediately before the selected one, for period-on-period
+    deltas. Computed here rather than in the browser so the comparison uses
+    the same aggregation rules as the current period.
+    """
+    span = date_diff(end, start) + 1
+    prev_end = add_days(start, -1)
+    prev_start = add_days(prev_end, -(span - 1))
+    rows = frappe.get_all(
+        "Triple Whale Daily Metric",
+        filters={"metric_date": ["between", [prev_start, prev_end]]},
+        fields=["total_sales", "spend", "orders", "net_profit"],
+    )
+    out = {"total_sales": 0.0, "spend": 0.0, "orders": 0, "net_profit": 0.0}
+    for r in rows:
+        for k in out:
+            out[k] += r.get(k) or 0
+    out["mer"] = (out["total_sales"] / out["spend"]) if out["spend"] else None
+    out["aov"] = (out["total_sales"] / out["orders"]) if out["orders"] else None
+    return out
 
 
 @frappe.whitelist()
@@ -113,7 +171,9 @@ def get_top_products(days=30, limit=20, sort_by="product_revenue"):
         spend = r.get("attributed_spend") or 0
         r["conversion_rate"] = ((r.get("orders") or 0) / views * 100) if views else None
         r["add_to_cart_rate"] = ((r.get("add_to_carts") or 0) / views * 100) if views else None
-        r["attributed_roas"] = (revenue / spend) if spend else None
+        r["attributed_roas"] = (
+            (revenue / spend) if spend >= MIN_SPEND_FOR_ROAS else None
+        )
         r["return_rate"] = ((r.get("refunded_amount") or 0) / revenue * 100) if revenue else None
 
     return {"period": {"start": start, "end": end}, "products": rows}

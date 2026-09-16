@@ -42,6 +42,11 @@ SQL_FIELD_MAP = {
 
 _TEXT_FIELDS = ("sku", "product_title", "variant_title", "vendor", "product_status")
 
+# Below this much spend a ROAS ratio is arithmetic noise rather than a result:
+# a product that picked up a few rupees of impressions next to a large organic
+# sale reads as a spectacular return it did not earn.
+MIN_SPEND_FOR_ROAS = 100.0
+
 # SKU -> Item name for the duration of one sync. A sync re-fetches a rolling
 # window, so the same SKU recurs once per day in the window; without this each
 # repeat costs up to four queries. Sentinel distinguishes "looked up, no match"
@@ -198,7 +203,7 @@ def _set_derived_rates(doc, row):
     # The warehouse reports spend at product grain but not a separate
     # ad-attributed revenue column, so ROAS here is product revenue over the
     # ad spend attributed to that product.
-    doc.attributed_roas = (revenue / spend) if spend else None
+    doc.attributed_roas = (revenue / spend) if spend >= MIN_SPEND_FOR_ROAS else None
     doc.return_rate = (returned / revenue * 100) if revenue else None
 
 
