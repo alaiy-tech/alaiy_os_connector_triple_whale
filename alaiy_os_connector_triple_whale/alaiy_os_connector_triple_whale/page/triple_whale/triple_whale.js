@@ -15,10 +15,10 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 	const RANGES = [7, 30, 90];
 	let active_days = 30;
 	let charts = {};
-	// The currency the figures are denominated in, which is whatever Triple
-	// Whale aggregated in rather than the site default. Replaced by whatever
-	// each response reports.
-	let currency = "USD";
+	// The currency the figures are denominated in, as configured on the
+	// connector. Left unset until a response reports one, so an unconfigured
+	// currency shows bare numbers rather than a symbol that may be wrong.
+	let currency = null;
 
 	$(page.body).html(`
 		<div class="tw-page">
@@ -103,9 +103,10 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 
 	function money(v) {
 		if (v === null || v === undefined) return "—";
-		const sym = frappe.model.get_currency_symbol
-			? frappe.model.get_currency_symbol(currency) || ""
-			: "";
+		const sym =
+			currency && frappe.model.get_currency_symbol
+				? frappe.model.get_currency_symbol(currency) || `${currency} `
+				: "";
 		const n = Number(v);
 		const abs = Math.abs(n);
 		const sign = n < 0 ? "-" : "";
@@ -183,7 +184,7 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 			s.length
 				? `${frappe.datetime.str_to_user(d.period.start)} – ${frappe.datetime.str_to_user(
 						d.period.end
-				  )} · ${s.length} days · ${esc(currency)}`
+				  )} · ${s.length} days${currency ? ` · ${esc(currency)}` : ""}`
 				: ""
 		);
 

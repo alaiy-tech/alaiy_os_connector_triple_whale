@@ -18,23 +18,18 @@ from frappe.utils import add_days, date_diff, today
 MIN_SPEND_FOR_ROAS = 100.0
 
 
-# What Triple Whale reports in when the connector does not ask for a specific
-# currency. Deliberately not the Alaiy OS site currency: Triple Whale bases its
-# figures on the connected store and ad accounts, so falling back to the site
-# default would label genuinely foreign figures with the local symbol.
-DEFAULT_REPORT_CURRENCY = "USD"
-
-
 def _report_currency():
     """
-    The currency the figures are actually denominated in.
+    The currency the figures are actually denominated in, as configured.
 
-    This is whatever the connector asked Triple Whale to aggregate in, which
-    need not match the Alaiy OS site currency -- stamping the site symbol on
-    figures returned in another currency would misstate them.
+    Triple Whale bases its figures on the connected store and ad accounts,
+    which need not report in the Alaiy OS site currency -- stamping the site
+    symbol on figures returned in another one would misstate them. Nothing is
+    assumed when the setting is blank: the page then shows bare numbers rather
+    than a symbol that might be wrong.
     """
     settings = frappe.get_single("Triple Whale Connector Settings")
-    return (settings.triple_whale_currency or "").strip() or DEFAULT_REPORT_CURRENCY
+    return (settings.triple_whale_currency or "").strip() or None
 
 
 def _window(days):

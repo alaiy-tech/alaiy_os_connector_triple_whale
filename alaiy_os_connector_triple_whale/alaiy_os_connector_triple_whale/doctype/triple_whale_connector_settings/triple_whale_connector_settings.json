@@ -56,8 +56,8 @@
    "fieldtype": "Link",
    "label": "Currency",
    "options": "Currency",
-   "description": "Currency Triple Whale aggregates in. Leave as USD unless the Triple Whale account reports in something else -- this is the currency of the figures shown, not the Alaiy OS site currency. Check with: SELECT DISTINCT currency FROM orders_table.",
-   "default": "USD"
+   "description": "The currency the Triple Whale account reports in -- this is the currency of the figures shown, not the Alaiy OS site currency. Confirm with: SELECT DISTINCT currency FROM orders_table.",
+   "reqd": 1
   },
   {
    "fieldname": "sb_defaults",
