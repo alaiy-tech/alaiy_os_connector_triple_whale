@@ -74,7 +74,7 @@ doctypes; there is no overlap to share.
    bench build --app alaiy_os_connector_triple_whale
    ```
 3. Open **Triple Whale Connector Settings**, paste the API key, set the shop
-   domain (the `myshopify.com` domain registered with Triple Whale), and tick
+   domain (the Shop URL exactly as Triple Whale shows it), and tick
    Enable.
 4. Run **Test Connection**. On success it reports the scopes the key carries.
 
@@ -97,7 +97,7 @@ with exponential backoff, honouring `Retry-After` when present.
 | Field | Purpose |
 |---|---|
 | API Key | Personal API key, stored encrypted. |
-| Shop Domain | The `myshopify.com` domain registered with Triple Whale. Sent as `shopDomain`/`shopId`. |
+| Shop Domain | The Shop URL exactly as shown in Triple Whale under Settings → Store. Sent as `shopDomain`/`shopId`/`shop`. |
 | Currency | Aggregation currency. Defaults to the Triple Whale account currency when blank. |
 | Company | Alaiy OS company the figures belong to. |
 | Metrics / Attribution Sync Interval | `Disabled`, `Hourly` or `Daily`. |

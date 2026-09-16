@@ -44,7 +44,7 @@
    "fieldtype": "Data",
    "label": "Shop Domain",
    "reqd": 1,
-   "description": "The myshopify.com domain registered with Triple Whale, e.g. example.myshopify.com"
+   "description": "The Shop URL exactly as shown in Triple Whale under Settings -> Store. Shopify stores use the myshopify.com domain; BigCommerce, WooCommerce and custom platforms use whatever Triple Whale shows there."
   },
   {
    "fieldname": "cb_connection",
