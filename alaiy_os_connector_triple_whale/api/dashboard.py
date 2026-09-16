@@ -237,3 +237,146 @@ def get_state():
         "product_rows": frappe.db.count("Triple Whale Product Metric"),
         "ad_rows": frappe.db.count("Triple Whale Ad Metric"),
     }
+
+
+@frappe.whitelist()
+def get_connection_overview():
+    """
+    What Triple Whale is connected to, and what each sync is doing.
+
+    Powers the panel on the settings form. The integration list is derived
+    from the metrics the account actually reports rather than a hardcoded
+    list, so a newly connected platform shows up on its own.
+    """
+    settings = frappe.get_single("Triple Whale Connector Settings")
+
+    syncs = []
+    for key, label, interval_field, doctype in (
+        ("metrics", "Store Metrics", "triple_whale_metrics_sync_interval",
+         "Triple Whale Daily Metric"),
+        ("attribution", "Product Attribution", "triple_whale_attribution_sync_interval",
+         "Triple Whale Product Metric"),
+        ("ads", "Ad Channels", "triple_whale_ads_sync_interval",
+         "Triple Whale Ad Metric"),
+    ):
+        last = frappe.get_all(
+            "Triple Whale Sync Log",
+            filters={"sync_type": key},
+            fields=[
+                "name", "status", "trigger", "started_at", "finished_at",
+                "items_processed", "items_created", "items_updated",
+                "items_failed", "error_message",
+            ],
+            order_by="started_at desc",
+            limit=1,
+        )
+        syncs.append({
+            "key": key,
+            "label": label,
+            "interval": settings.get(interval_field) or "Disabled",
+            "doctype": doctype,
+            "rows": frappe.db.count(doctype),
+            "last": last[0] if last else None,
+        })
+
+    return {
+        "is_enabled": bool(settings.is_enabled),
+        "shop_domain": settings.triple_whale_shop_domain,
+        "has_key": bool(settings.triple_whale_api_key),
+        "lookback_days": settings.triple_whale_lookback_days,
+        "syncs": syncs,
+        "integrations": _detected_integrations(),
+    }
+
+
+# Metric id prefix -> the platform it belongs to. Triple Whale reports every
+# integration it supports whether or not this account uses one, so presence is
+# inferred from a non-zero value rather than from the metric merely existing.
+_INTEGRATION_PREFIXES = {
+    "facebook": "Meta Ads",
+    "google": "Google Ads",
+    "ga_": "Google Analytics",
+    "tiktok": "TikTok Ads",
+    "snapchat": "Snapchat Ads",
+    "pinterest": "Pinterest Ads",
+    "twitter": "X Ads",
+    "bing": "Microsoft Ads",
+    "amazon": "Amazon",
+    "walmart": "Walmart",
+    "klaviyo": "Klaviyo",
+    "attentive": "Attentive",
+    "postscript": "Postscript",
+    "omnisend": "Omnisend",
+    "smsbump": "SMSBump",
+    "sendlane": "Sendlane",
+    "recharge": "Recharge",
+    "skio": "Skio",
+    "loop": "Loop",
+    "stayai": "Stay AI",
+    "shipbob": "ShipBob",
+    "shipstation": "ShipStation",
+    "gorgias": "Gorgias",
+    "okendo": "Okendo",
+    "criteo": "Criteo",
+    "outbrain": "Outbrain",
+    "taboola": "Taboola",
+    "applovin": "AppLovin",
+    "linkedin": "LinkedIn Ads",
+    "reddit": "Reddit Ads",
+    "rokt": "Rokt",
+    "mountain": "MNTN",
+    "vibe": "Vibe",
+    "openaiAds": "OpenAI Ads",
+    "influencer": "Influencers",
+    "pixel": "Triple Whale Pixel",
+    "shopify": "Shopify",
+}
+
+
+def _detected_integrations(days=30):
+    """
+    Platforms this account actually reports data for, most recent window.
+
+    Reads the stored All Metrics rows rather than calling Triple Whale, so the
+    settings form stays instant and never spends API quota.
+    """
+    start, end = _window(days)
+    rows = frappe.db.sql(
+        """
+        SELECT DISTINCT v.metric_id
+        FROM `tabTriple Whale Metric Value` v
+        INNER JOIN `tabTriple Whale Daily Metric` d ON d.name = v.parent
+        WHERE d.metric_date BETWEEN %(start)s AND %(end)s
+        """,
+        {"start": start, "end": end},
+    )
+    seen = {r[0] for r in rows if r and r[0]}
+
+    found = {}
+    for metric_id in seen:
+        for prefix, label in _INTEGRATION_PREFIXES.items():
+            if metric_id.startswith(prefix):
+                found.setdefault(label, 0)
+                found[label] += 1
+                break
+
+    # Channels that actually carry ad spend are worth stating outright rather
+    # than inferring from a metric prefix.
+    spend_channels = frappe.db.sql(
+        """
+        SELECT channel, SUM(spend) AS spend
+        FROM `tabTriple Whale Ad Metric`
+        WHERE metric_date BETWEEN %(start)s AND %(end)s
+        GROUP BY channel HAVING SUM(spend) > 0
+        """,
+        {"start": start, "end": end},
+        as_dict=True,
+    )
+
+    return {
+        "platforms": sorted(found.keys()),
+        "metric_counts": found,
+        "ad_channels": [
+            {"channel": r["channel"], "spend": r["spend"]} for r in spend_channels
+        ],
+    }

@@ -25,7 +25,7 @@ def after_install():
     'Failed to decrypt key' error on first load.
     """
     frappe.db.set_single_value(
-        "Triple Whale Connector Settings", "triple_whale_api_token", ""
+        "Triple Whale Connector Settings", "triple_whale_api_key", ""
     )
     frappe.db.commit()
 
