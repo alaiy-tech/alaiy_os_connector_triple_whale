@@ -123,6 +123,14 @@ def run(trigger="scheduled", log_name=None):
         meta = extract_metric_meta(response)
         active = active_metric_ids(by_day, response)
 
+        # Some metrics carry only a period total and no daily chart -- customer
+        # counts and inventory levels among them. Those are attached to the
+        # last day of the window rather than dropped, since leaving the field
+        # unset makes Frappe store a zero that reads as a real measurement.
+        period_only = period_only_metrics(response, by_day)
+        if by_day and period_only:
+            by_day[max(by_day)].update(period_only)
+
         log.pages_total = 1
         log.pages_done = 1
         log.items_processed = len(by_day)
@@ -221,6 +229,27 @@ def _as_number(value):
         return float(value)
     except (TypeError, ValueError):
         return 1.0 if str(value).strip() else None
+
+
+def period_only_metrics(response, by_day):
+    """
+    Metrics the response reports for the period but never breaks down by day.
+
+    Returning them separately keeps the daily rows honest: a metric that was
+    simply never measured per day should not be written as zero on every day,
+    which is indistinguishable from having genuinely been zero.
+    """
+    daily_keys = set()
+    for payload in by_day.values():
+        daily_keys.update(payload)
+
+    period_only = {}
+    for metric_id, value in (extract_metrics(response) or {}).items():
+        if metric_id in daily_keys:
+            continue
+        if _as_number(value):
+            period_only[metric_id] = value
+    return period_only
 
 
 def extract_metric_meta(response):

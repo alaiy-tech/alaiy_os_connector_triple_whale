@@ -118,12 +118,12 @@ def _acquisition_cost(rows, spend, new_customer_orders):
     customers = float(new_customer_orders or 0)
 
     if not customers:
-        # Fall back to the share of unique customers flagged new.
+        # Fall back to the share of orders flagged as from new customers.
         for r in rows:
-            unique = r.get("unique_customers") or 0
+            day_orders = r.get("orders") or 0
             share = r.get("new_customers_percent")
-            if unique and share is not None:
-                customers += unique * float(share) / 100
+            if day_orders and share is not None:
+                customers += day_orders * float(share) / 100
 
     if not customers:
         # Last resort: back the count out of the daily CAC Triple Whale gave.
