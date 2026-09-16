@@ -169,28 +169,25 @@ function paint(frm, d) {
 	const platforms = integ.platforms || [];
 	const counts = integ.metric_counts || {};
 	const channels = integ.ad_channels || [];
-	const spending = new Set(
-		channels.map((c) =>
-			String(c.channel || "")
-				.replace(/-ads$/, "")
-				.toLowerCase()
-		)
-	);
+	// The server resolves channel ids to the same labels the platform list
+	// uses, so a chip can be matched by name rather than by trimming strings.
+	const spending = new Set(integ.spending || []);
 
 	const chips = platforms.length
 		? platforms
 				.map((p) => {
-					const live = spending.has(p.split(" ")[0].toLowerCase());
+					const live = spending.has(p);
 					return `<span class="twc-chip ${live ? "twc-chip-live" : ""}"
-						title="${nf(counts[p])} metrics reported">
-						${live ? '<i class="twc-live"></i>' : ""}${esc(p)}</span>`;
+						title="${nf(counts[p])} metrics reported${
+						live ? " · spending" : ""
+					}">${live ? '<i class="twc-live"></i>' : ""}${esc(p)}</span>`;
 				})
 				.join("")
 		: `<span class="twc-muted">Nothing detected yet — run a sync first.</span>`;
 
 	const spend_note = channels.length
 		? `<div class="twc-note">Ad spend in the last 30 days from ${channels
-				.map((c) => esc(c.channel.replace(/-ads$/, "")))
+				.map((c) => esc(c.label || c.channel))
 				.join(", ")}.</div>`
 		: "";
 

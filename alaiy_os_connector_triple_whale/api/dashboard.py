@@ -18,20 +18,23 @@ from frappe.utils import add_days, date_diff, today
 MIN_SPEND_FOR_ROAS = 100.0
 
 
+# What Triple Whale reports in when the connector does not ask for a specific
+# currency. Deliberately not the Alaiy OS site currency: Triple Whale bases its
+# figures on the connected store and ad accounts, so falling back to the site
+# default would label genuinely foreign figures with the local symbol.
+DEFAULT_REPORT_CURRENCY = "USD"
+
+
 def _report_currency():
     """
     The currency the figures are actually denominated in.
 
-    Triple Whale aggregates in whatever currency the connector asks for, which
-    is not necessarily the Alaiy OS site currency -- stamping the site symbol
-    on figures Triple Whale returned in another currency would misstate them.
-    Falls back to the site default only when the connector leaves it unset,
-    which is also what Triple Whale does.
+    This is whatever the connector asked Triple Whale to aggregate in, which
+    need not match the Alaiy OS site currency -- stamping the site symbol on
+    figures returned in another currency would misstate them.
     """
     settings = frappe.get_single("Triple Whale Connector Settings")
-    return (settings.triple_whale_currency or "").strip() or frappe.defaults.get_global_default(
-        "currency"
-    )
+    return (settings.triple_whale_currency or "").strip() or DEFAULT_REPORT_CURRENCY
 
 
 def _window(days):
@@ -432,10 +435,45 @@ def _detected_integrations(days=30):
         as_dict=True,
     )
 
+    # Triple Whale's channel ids do not match the platform names the metric
+    # prefixes produce -- facebook-ads is Meta Ads -- so the mapping is stated
+    # rather than inferred from the strings.
+    spending_labels = sorted(
+        {
+            _CHANNEL_LABELS.get(r["channel"], r["channel"])
+            for r in spend_channels
+        }
+    )
+
     return {
         "platforms": sorted(found.keys()),
         "metric_counts": found,
+        "spending": spending_labels,
         "ad_channels": [
-            {"channel": r["channel"], "spend": r["spend"]} for r in spend_channels
+            {
+                "channel": r["channel"],
+                "label": _CHANNEL_LABELS.get(r["channel"], r["channel"]),
+                "spend": r["spend"],
+            }
+            for r in spend_channels
         ],
     }
+
+
+# Triple Whale's standardized channel id -> the platform label used elsewhere.
+_CHANNEL_LABELS = {
+    "facebook-ads": "Meta Ads",
+    "google-ads": "Google Ads",
+    "tiktok-ads": "TikTok Ads",
+    "snapchat-ads": "Snapchat Ads",
+    "pinterest-ads": "Pinterest Ads",
+    "twitter-ads": "X Ads",
+    "bing-ads": "Microsoft Ads",
+    "amazon-ads": "Amazon",
+    "linkedin-ads": "LinkedIn Ads",
+    "reddit-ads": "Reddit Ads",
+    "criteo-ads": "Criteo",
+    "outbrain-ads": "Outbrain",
+    "taboola-ads": "Taboola",
+    "applovin-ads": "AppLovin",
+}

@@ -16,8 +16,9 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 	let active_days = 30;
 	let charts = {};
 	// The currency the figures are denominated in, which is whatever Triple
-	// Whale aggregated in rather than the site default. Set from each response.
-	let currency = frappe.boot.sysdefaults.currency;
+	// Whale aggregated in rather than the site default. Replaced by whatever
+	// each response reports.
+	let currency = "USD";
 
 	$(page.body).html(`
 		<div class="tw-page">
