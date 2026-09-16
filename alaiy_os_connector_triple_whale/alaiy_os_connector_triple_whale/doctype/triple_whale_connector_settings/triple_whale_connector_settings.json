@@ -1,0 +1,133 @@
+{
+ "creation": "2026-07-20 00:00:00.000000",
+ "docstatus": 0,
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "is_enabled",
+  "sb_connection",
+  "triple_whale_api_key",
+  "triple_whale_shop_domain",
+  "cb_connection",
+  "triple_whale_currency",
+  "sb_defaults",
+  "triple_whale_company",
+  "sb_schedule",
+  "triple_whale_metrics_sync_interval",
+  "cb_schedule",
+  "triple_whale_attribution_sync_interval",
+  "sb_window",
+  "triple_whale_lookback_days"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "is_enabled",
+   "fieldtype": "Check",
+   "label": "Enable Triple Whale"
+  },
+  {
+   "fieldname": "sb_connection",
+   "fieldtype": "Section Break",
+   "label": "API Connection"
+  },
+  {
+   "fieldname": "triple_whale_api_key",
+   "fieldtype": "Password",
+   "label": "API Key",
+   "reqd": 1,
+   "description": "Generated at app.triplewhale.com/api-keys. Needs Summary Page: Read, Pixel Attribution: Read, and Data Out (SQL) scopes."
+  },
+  {
+   "fieldname": "triple_whale_shop_domain",
+   "fieldtype": "Data",
+   "label": "Shop Domain",
+   "reqd": 1,
+   "description": "The myshopify.com domain registered with Triple Whale, e.g. example.myshopify.com"
+  },
+  {
+   "fieldname": "cb_connection",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "triple_whale_currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "description": "Currency for aggregation. Defaults to the Triple Whale account currency when blank."
+  },
+  {
+   "fieldname": "sb_defaults",
+   "fieldtype": "Section Break",
+   "label": "Alaiy OS Defaults"
+  },
+  {
+   "fieldname": "triple_whale_company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "sb_schedule",
+   "fieldtype": "Section Break",
+   "label": "Sync Schedule"
+  },
+  {
+   "fieldname": "triple_whale_metrics_sync_interval",
+   "fieldtype": "Select",
+   "label": "Metrics Sync Interval",
+   "options": "Disabled\nHourly\nDaily",
+   "default": "Daily",
+   "description": "Summary metrics are aggregate and settle overnight; Daily is sufficient."
+  },
+  {
+   "fieldname": "cb_schedule",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "triple_whale_attribution_sync_interval",
+   "fieldtype": "Select",
+   "label": "Attribution Sync Interval",
+   "options": "Disabled\nHourly\nDaily",
+   "default": "Daily"
+  },
+  {
+   "fieldname": "sb_window",
+   "fieldtype": "Section Break",
+   "label": "Sync Window"
+  },
+  {
+   "fieldname": "triple_whale_lookback_days",
+   "fieldtype": "Int",
+   "label": "Lookback Days",
+   "default": "7",
+   "description": "How many days back each sync re-fetches. Attribution is restated for several days after an order, so a window wider than one day is required."
+  }
+ ],
+ "is_single": 1,
+ "links": [],
+ "modified": "2026-07-20 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Alaiy Os Connector Triple Whale",
+ "name": "Triple Whale Connector Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
