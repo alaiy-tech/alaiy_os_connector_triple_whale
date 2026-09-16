@@ -3,11 +3,15 @@
 """
 Store-wide summary metrics -> Triple Whale Daily Metric.
 
-The Summary Page endpoint aggregates a whole period into one flat metric list
-rather than breaking it down by day, so this calls it once per day in the
-window to build a per-day series.
+The Summary Page endpoint returns every metric's period total alongside a
+daily series in `charts.current`, so one call covers the whole window.
+
+The series lags the current day: a day only appears once it has closed, so
+today is never written by this sync. It lands on the following run, which is
+another reason the sync re-fetches a window rather than a single day.
 """
 
+import datetime
 import json
 
 import frappe
@@ -66,7 +70,7 @@ def run(trigger="scheduled", log_name=None):
         start, end = sync_window()
 
         response = client.summary_page(start, end)
-        by_day = extract_daily_series(response)
+        by_day = extract_daily_series(response, start, end)
 
         log.pages_total = 1
         log.pages_done = 1
@@ -124,15 +128,20 @@ def extract_metrics(response):
     return flat
 
 
-def extract_daily_series(response):
+def extract_daily_series(response, start=None, end=None):
     """
     Turn the response into {"YYYY-MM-DD": {id: value}} using each metric's
     `charts.current` series.
 
-    Chart points are {"x": <day of month>, "y": <value>}. The endpoint answers
-    month-to-date regardless of the range asked for, so the month those days
-    belong to is taken from the largest x seen: it is the most recent day with
-    data, which cannot be in the future.
+    Chart points are {"x": <day of year>, "y": <value>} -- a standard 1-based
+    ordinal day within the year, not a day of month and not a timestamp.
+    Verified by matching chart values against orders_table, which carries real
+    dates: x=252 is 2026-09-09, whose day-of-year is 252.
+
+    The year is not stated anywhere in the response, so it is taken from the
+    requested window. The series also carries one day either side of what was
+    asked for, so points outside the window are dropped rather than written
+    under a wrong date.
     """
     if not isinstance(response, dict):
         return {}
@@ -140,9 +149,14 @@ def extract_daily_series(response):
     if not isinstance(metrics, list):
         return {}
 
-    today_date = getdate(today())
-    by_day = {}
+    end_date = getdate(end or today())
+    start_date = getdate(start) if start else getdate(add_days(end_date, -30))
 
+    # A window spanning a year boundary would make one ordinal ambiguous, so
+    # candidate years are taken from the window itself.
+    years = {start_date.year, end_date.year}
+
+    by_day = {}
     for entry in metrics:
         if not isinstance(entry, dict):
             continue
@@ -154,29 +168,32 @@ def extract_daily_series(response):
         for point in charts:
             if not isinstance(point, dict):
                 continue
-            day = point.get("x")
-            if day is None:
-                continue
-            try:
-                day = int(day)
-            except (TypeError, ValueError):
-                continue
-            if not 1 <= day <= 31:
-                continue
-
-            # A day number above today's means the series belongs to last
-            # month -- the API never reports days that have not happened.
-            month_ref = today_date
-            if day > today_date.day:
-                month_ref = getdate(add_days(today_date.replace(day=1), -1))
-            try:
-                stamp = str(month_ref.replace(day=day))
-            except ValueError:
-                continue
-
-            by_day.setdefault(stamp, {})[str(key)] = point.get("y")
+            stamp = _ordinal_to_date(point.get("x"), years, start_date, end_date)
+            if stamp:
+                by_day.setdefault(stamp, {})[str(key)] = point.get("y")
 
     return by_day
+
+
+def _ordinal_to_date(x, years, start_date, end_date):
+    """Resolve a day-of-year ordinal to a YYYY-MM-DD inside the window."""
+    if x is None:
+        return None
+    try:
+        ordinal = int(x)
+    except (TypeError, ValueError):
+        return None
+    if not 1 <= ordinal <= 366:
+        return None
+
+    for year in sorted(years):
+        try:
+            candidate = datetime.date(year, 1, 1) + datetime.timedelta(days=ordinal - 1)
+        except ValueError:
+            continue
+        if candidate.year == year and start_date <= candidate <= end_date:
+            return str(candidate)
+    return None
 
 
 def upsert(metric_date, payload):
