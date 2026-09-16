@@ -42,11 +42,20 @@ SQL_FIELD_MAP = {
 
 _TEXT_FIELDS = ("sku", "product_title", "variant_title", "vendor", "product_status")
 
+# SKU -> Item name for the duration of one sync. A sync re-fetches a rolling
+# window, so the same SKU recurs once per day in the window; without this each
+# repeat costs up to four queries. Sentinel distinguishes "looked up, no match"
+# from "not looked up yet", so unmatched SKUs are not retried either.
+_MISSING = object()
+_item_cache = {}
+
 
 def run(trigger="scheduled", log_name=None):
     """Pull per-product metrics for the sync window via warehouse SQL."""
 
     def worker(log):
+        _item_cache.clear()
+
         client = TripleWhaleClient()
         start, end = sync_window()
         rows = extract_rows(client.sql(PRODUCT_METRICS_QUERY, start, end))
@@ -72,9 +81,33 @@ def run(trigger="scheduled", log_name=None):
         log.items_created = created
         log.items_updated = updated
         log.items_failed = failed
+        log.log_messages = _match_summary()
         frappe.db.commit()
 
     run_logged("attribution", trigger, log_name, worker)
+
+
+def _match_summary():
+    """
+    Report how many distinct SKUs resolved to an Item.
+
+    A low rate is the difference between "this supplier sold nothing" and
+    "their SKUs do not line up with Triple Whale's", which is otherwise
+    invisible -- unmatched rows still store fine, they just never join.
+    """
+    total = len(_item_cache)
+    if not total:
+        return "No SKUs seen."
+
+    unmatched = sorted(s for s, item in _item_cache.items() if not item)
+    matched = total - len(unmatched)
+    lines = [f"SKU to Item: {matched}/{total} matched."]
+    if unmatched:
+        shown = ", ".join(unmatched[:50])
+        lines.append(f"Unmatched ({len(unmatched)}): {shown}")
+        if len(unmatched) > 50:
+            lines.append(f"...and {len(unmatched) - 50} more.")
+    return "\n".join(lines)
 
 
 def extract_rows(response):
@@ -176,10 +209,36 @@ def resolve_item(sku):
     Triple Whale reports on everything the store sells, which can include
     products Alaiy OS does not carry, so an unmatched SKU is expected and
     leaves the link blank rather than failing the row.
+
+    Matching is tried in order of decreasing confidence: the Item name, then
+    item_code, then the barcode child table, then a case-insensitive
+    item_code. The case-insensitive pass is last because it can in principle
+    match more than one Item, in which case the row is left unlinked rather
+    than guessing.
     """
     if not sku:
         return None
     sku = str(sku).strip()
-    if frappe.db.exists("Item", sku):
-        return sku
-    return frappe.db.get_value("Item", {"item_code": sku}, "name")
+    if not sku:
+        return None
+
+    cached = _item_cache.get(sku)
+    if cached is not _MISSING:
+        return cached
+
+    resolved = (
+        frappe.db.get_value("Item", sku, "name")
+        or frappe.db.get_value("Item", {"item_code": sku}, "name")
+        or frappe.db.get_value("Item Barcode", {"barcode": sku}, "parent")
+        or _match_case_insensitive(sku)
+    )
+    _item_cache[sku] = resolved
+    return resolved
+
+
+def _match_case_insensitive(sku):
+    matches = frappe.db.sql(
+        "SELECT name FROM `tabItem` WHERE LOWER(item_code) = LOWER(%s) LIMIT 2",
+        (sku,),
+    )
+    return matches[0][0] if len(matches) == 1 else None
