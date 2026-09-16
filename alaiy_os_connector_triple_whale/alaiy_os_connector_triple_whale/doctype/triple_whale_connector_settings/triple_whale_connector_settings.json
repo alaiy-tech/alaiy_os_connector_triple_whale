@@ -18,6 +18,7 @@
   "cb_schedule",
   "triple_whale_attribution_sync_interval",
   "triple_whale_ads_sync_interval",
+  "triple_whale_cohorts_sync_interval",
   "sb_window",
   "triple_whale_lookback_days"
  ],
@@ -101,6 +102,14 @@
    "options": "Disabled\nHourly\nDaily",
    "default": "Daily",
    "description": "Per-channel ad performance from Meta, Google and every other connected platform."
+  },
+  {
+   "fieldname": "triple_whale_cohorts_sync_interval",
+   "fieldtype": "Select",
+   "label": "Cohorts Sync Interval",
+   "options": "Disabled\nDaily\nWeekly",
+   "default": "Weekly",
+   "description": "Retention curves move slowly and the query scans two years of orders, so weekly is enough."
   },
   {
    "fieldname": "sb_window",

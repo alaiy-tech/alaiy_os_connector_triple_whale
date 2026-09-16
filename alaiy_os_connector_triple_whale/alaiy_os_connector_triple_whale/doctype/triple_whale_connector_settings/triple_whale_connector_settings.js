@@ -56,6 +56,7 @@ frappe.ui.form.on("Triple Whale Connector Settings", {
 			["Sync Store Metrics", "trigger_metrics_sync"],
 			["Sync Product Attribution", "trigger_attribution_sync"],
 			["Sync Ad Channels", "trigger_ads_sync"],
+			["Sync Cohorts", "trigger_cohorts_sync"],
 		].forEach(([label, method]) => {
 			frm.add_custom_button(
 				__(label),
@@ -82,6 +83,7 @@ frappe.ui.form.on("Triple Whale Connector Settings", {
 					"trigger_metrics_sync",
 					"trigger_attribution_sync",
 					"trigger_ads_sync",
+					"trigger_cohorts_sync",
 				];
 				Promise.all(
 					methods.map((m) =>
@@ -223,9 +225,10 @@ function paint(frm, d) {
 			<div class="twc-chips">${chips}</div>
 			${spend_note}
 			<div class="twc-note twc-muted">
-				Detected from the metrics this account actually reports, not a fixed
-				list — a platform connected in Triple Whale appears here after the
-				next sync. A dot marks one currently spending.
+				Detected from the metrics this account actually reports, so a platform
+				connected in Triple Whale appears here after the next sync. A green dot
+				marks one that bought traffic in the last 30 days; a store, analytics
+				or email integration has no ad spend and so never carries one.
 			</div>
 		</div>
 	</div>`;

@@ -1,6 +1,7 @@
 const TW_SYNC_TYPE_COLORS = {
 	metrics: "blue",
 	ads: "green",
+	cohorts: "purple",
 	attribution: "orange",
 	webhook: "cyan",
 };

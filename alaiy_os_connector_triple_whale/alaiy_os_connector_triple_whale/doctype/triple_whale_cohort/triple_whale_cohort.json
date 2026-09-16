@@ -1,0 +1,64 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-09-16 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "cohort_month",
+  "months_since",
+  "cb_identity",
+  "cohort_customers",
+  "sb_activity",
+  "active_customers",
+  "retention_rate",
+  "orders",
+  "cb_activity",
+  "revenue",
+  "revenue_per_customer",
+  "cumulative_revenue_per_customer"
+ ],
+ "fields": [
+  {"fieldname": "cohort_month", "fieldtype": "Date", "label": "Cohort Month", "reqd": 1,
+   "in_list_view": 1, "in_standard_filter": 1,
+   "description": "The month these customers placed their first ever order."},
+  {"fieldname": "months_since", "fieldtype": "Int", "label": "Months Since", "reqd": 1,
+   "in_list_view": 1, "in_standard_filter": 1,
+   "description": "0 is the acquisition month itself."},
+  {"fieldname": "cb_identity", "fieldtype": "Column Break"},
+  {"fieldname": "cohort_customers", "fieldtype": "Int", "label": "Cohort Size", "in_list_view": 1,
+   "description": "Customers acquired in this cohort month. Constant across its rows."},
+
+  {"fieldname": "sb_activity", "fieldtype": "Section Break", "label": "Activity"},
+  {"fieldname": "active_customers", "fieldtype": "Int", "label": "Active Customers", "in_list_view": 1,
+   "description": "Customers from this cohort who ordered in this month."},
+  {"fieldname": "retention_rate", "fieldtype": "Percent", "label": "Retention Rate", "in_list_view": 1,
+   "description": "Active customers as a share of the cohort. Month 0 is 100% by definition."},
+  {"fieldname": "orders", "fieldtype": "Int", "label": "Orders"},
+  {"fieldname": "cb_activity", "fieldtype": "Column Break"},
+  {"fieldname": "revenue", "fieldtype": "Currency", "label": "Revenue"},
+  {"fieldname": "revenue_per_customer", "fieldtype": "Currency", "label": "Revenue per Cohort Customer",
+   "description": "This month's revenue spread across the whole cohort, not only those who ordered."},
+  {"fieldname": "cumulative_revenue_per_customer", "fieldtype": "Currency",
+   "label": "Cumulative Revenue per Customer",
+   "description": "Running total from month 0. This is realised LTV: the curve it traces is what CAC has to be judged against."}
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-16 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Alaiy Os Connector Triple Whale",
+ "name": "Triple Whale Cohort",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1, "delete": 1, "email": 1, "export": 1, "print": 1,
+   "read": 1, "report": 1, "role": "System Manager", "share": 1, "write": 1
+  }
+ ],
+ "sort_field": "cohort_month",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -11,6 +11,9 @@ later arrive on their own rows without a schema change.
 import frappe
 
 from alaiy_os_connector_triple_whale.triple_whale.ads.queries import CHANNEL_METRICS_QUERY
+from alaiy_os_connector_triple_whale.triple_whale.cohorts.queries import (
+    REFUNDS_BY_CHANNEL_QUERY,
+)
 from alaiy_os_connector_triple_whale.triple_whale.attribution.pull import extract_rows
 from alaiy_os_connector_triple_whale.triple_whale.auth import TripleWhaleClient
 from alaiy_os_connector_triple_whale.triple_whale.sync_log import run_logged
@@ -39,16 +42,17 @@ def run(trigger="scheduled", log_name=None):
         client = TripleWhaleClient()
         start, end = sync_window()
         rows = extract_rows(client.sql(CHANNEL_METRICS_QUERY, start, end))
+        refunds = _refunds_by_channel(client, start, end)
 
-        log.pages_total = 1
-        log.pages_done = 1
+        log.pages_total = 2
+        log.pages_done = 2
         log.items_processed = len(rows)
 
         created = updated = failed = 0
         channels = set()
         for row in rows:
             try:
-                if upsert(row):
+                if upsert(row, refunds):
                     created += 1
                 else:
                     updated += 1
@@ -72,7 +76,24 @@ def run(trigger="scheduled", log_name=None):
     run_logged("ads", trigger, log_name, worker)
 
 
-def upsert(row):
+def _refunds_by_channel(client, start, end):
+    """
+    Refunded value keyed by (date, channel).
+
+    Fetched alongside the spend figures so a channel's return rate sits beside
+    what it cost, which is the comparison that matters: a channel can look
+    efficient on ROAS while quietly returning most of what it sells.
+    """
+    refunds = {}
+    for row in extract_rows(client.sql(REFUNDS_BY_CHANNEL_QUERY, start, end)):
+        date = str(row.get("event_date") or "")[:10]
+        channel = row.get("channel")
+        if date and channel:
+            refunds[(date, str(channel))] = row
+    return refunds
+
+
+def upsert(row, refunds=None):
     """Write one channel-day row. Returns True when a new row was created."""
     metric_date = str(row.get("event_date") or "")[:10]
     channel = row.get("channel")
@@ -101,9 +122,29 @@ def upsert(row):
             if number is not None:
                 doc.set(target, number)
 
+    _set_refunds(doc, (refunds or {}).get((metric_date, str(channel))))
     _set_derived_rates(doc, row)
     doc.save(ignore_permissions=True)
     return is_new
+
+
+def _set_refunds(doc, refund_row):
+    """
+    Attach this channel's share of refunds.
+
+    Refund values arrive negative from the warehouse; they are stored as
+    positive amounts so the field reads as "how much came back" rather than
+    requiring the reader to interpret a sign.
+    """
+    if not refund_row:
+        doc.refunded = 0
+        doc.refunded_cogs = 0
+        doc.refunded_orders = 0
+        return
+
+    doc.refunded = abs(as_float(refund_row.get("refunded")) or 0)
+    doc.refunded_cogs = abs(as_float(refund_row.get("refunded_cogs")) or 0)
+    doc.refunded_orders = abs(as_float(refund_row.get("refunded_orders")) or 0)
 
 
 def _set_derived_rates(doc, row):
@@ -123,3 +164,9 @@ def _set_derived_rates(doc, row):
     doc.cpm = (spend / impressions * 1000) if impressions else None
     doc.roas = (conversion_value / spend) if spend else None
     doc.cpa = (spend / conversions) if conversions else None
+
+    refunded = as_float(doc.refunded) or 0
+    net_value = conversion_value - refunded
+    doc.net_conversion_value = net_value
+    doc.return_rate = (refunded / conversion_value * 100) if conversion_value else None
+    doc.net_roas = (net_value / spend) if spend else None

@@ -76,6 +76,14 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 
 			<div class="tw-card">
 				<div class="tw-card-head">
+					<h5>Cohort Retention</h5>
+					<span class="tw-legend tw-muted">share of each cohort ordering again</span>
+				</div>
+				<div id="tw-cohorts"></div>
+			</div>
+
+			<div class="tw-card">
+				<div class="tw-card-head">
 					<h5>Products</h5>
 					<span class="tw-legend tw-muted">Top 25 by revenue</span>
 				</div>
@@ -474,6 +482,79 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 			</div>`);
 	}
 
+	function render_cohorts(d) {
+		const cohorts = d.cohorts || [];
+		if (!cohorts.length) {
+			$("#tw-cohorts").html(
+				`<div class="tw-empty">No cohort data yet. Run the cohorts sync.</div>`
+			);
+			return;
+		}
+		if (d.currency) currency = d.currency;
+
+		// Cap the columns so a two-year history stays readable; the deepest
+		// cohorts keep their tail in the Cohorts doctype regardless.
+		const span = Math.min(d.max_months || 0, 11);
+		const head = [`<th>Cohort</th>`, `<th class="tw-right">Size</th>`];
+		for (let i = 0; i <= span; i++) head.push(`<th class="tw-right">M${i}</th>`);
+		head.push(`<th class="tw-right">LTV</th>`);
+
+		const body = cohorts
+			.map((c) => {
+				const byMonth = {};
+				c.periods.forEach((p) => (byMonth[p.months_since] = p));
+				const cells = [];
+				for (let i = 0; i <= span; i++) {
+					const p = byMonth[i];
+					if (!p) {
+						cells.push(`<td class="tw-cell tw-cell-none"></td>`);
+						continue;
+					}
+					const rate = Number(p.retention_rate || 0);
+					// Month 0 is 100% by definition, so shading it would drown
+					// out the months that actually carry information.
+					const shade = i === 0 ? 0 : Math.min(rate / 25, 1);
+					const label = i === 0 ? nf(p.active_customers) : pct(rate);
+					cells.push(
+						`<td class="tw-cell" title="${nf(p.active_customers)} of ${nf(
+							c.cohort_customers
+						)} · ${money(p.revenue)}"
+						style="background:rgba(36,144,239,${shade.toFixed(2)});${
+							shade > 0.6 ? "color:#fff" : ""
+						}">${label}</td>`
+					);
+				}
+				const last = c.periods[c.periods.length - 1] || {};
+				return `<tr>
+					<td class="tw-cohort-m">${esc(
+						frappe.datetime.str_to_obj(c.cohort_month).toLocaleDateString(undefined, {
+							month: "short",
+							year: "numeric",
+						})
+					)}</td>
+					<td class="tw-right">${nf(c.cohort_customers)}</td>
+					${cells.join("")}
+					<td class="tw-right"><strong>${money(
+						last.cumulative_revenue_per_customer
+					)}</strong></td>
+				</tr>`;
+			})
+			.join("");
+
+		$("#tw-cohorts").html(`
+			<div class="tw-table-wrap">
+				<table class="tw-table tw-cohort-table">
+					<thead><tr>${head.join("")}</tr></thead>
+					<tbody>${body}</tbody>
+				</table>
+			</div>
+			<div class="tw-cohort-note">
+				M0 shows customers acquired; later months show the share who ordered
+				again. LTV is cumulative revenue per acquired customer — the figure
+				CAC has to be judged against.
+			</div>`);
+	}
+
 	// ---- state bar --------------------------------------------------------
 
 	function render_state(s) {
@@ -486,7 +567,7 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 				</div>`);
 			return;
 		}
-		const pills = ["metrics", "attribution", "ads"]
+		const pills = ["metrics", "attribution", "ads", "cohorts"]
 			.map((k) => {
 				const l = s.last_sync[k];
 				if (!l) return `<span class="tw-pill tw-pill-grey">${k} · never</span>`;
@@ -516,6 +597,7 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 			"alaiy_os_connector_triple_whale.api.sync.trigger_metrics_sync",
 			"alaiy_os_connector_triple_whale.api.sync.trigger_attribution_sync",
 			"alaiy_os_connector_triple_whale.api.sync.trigger_ads_sync",
+			"alaiy_os_connector_triple_whale.api.sync.trigger_cohorts_sync",
 		];
 		Promise.all(methods.map((method) => frappe.call({ method }))).then(() => {
 			frappe.show_alert({
@@ -541,6 +623,10 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 			method: "alaiy_os_connector_triple_whale.api.dashboard.get_channels",
 			args,
 			callback: (r) => r.message && render_channels(r.message),
+		});
+		frappe.call({
+			method: "alaiy_os_connector_triple_whale.api.dashboard.get_cohorts",
+			callback: (r) => r.message && render_cohorts(r.message),
 		});
 		frappe.call({
 			method: "alaiy_os_connector_triple_whale.api.dashboard.get_top_products",

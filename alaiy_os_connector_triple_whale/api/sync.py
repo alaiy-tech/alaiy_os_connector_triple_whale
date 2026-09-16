@@ -54,6 +54,20 @@ def trigger_ads_sync():
 
 
 @frappe.whitelist()
+def trigger_cohorts_sync():
+    """Manually enqueue a cohort retention rebuild."""
+    log = get_or_create_log("cohorts", "manual")
+    frappe.enqueue(
+        "alaiy_os_connector_triple_whale.triple_whale.cohorts.pull.run",
+        queue="long",
+        timeout=1800,
+        trigger="manual",
+        log_name=log.name,
+    )
+    return {"queued": True, "log_name": log.name}
+
+
+@frappe.whitelist()
 def get_sync_status(sync_type=None):
     """
     Return the most recent Triple Whale Sync Log rows, newest first.

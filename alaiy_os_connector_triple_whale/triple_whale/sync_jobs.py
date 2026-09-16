@@ -12,6 +12,7 @@ from frappe.utils import add_to_date, now_datetime
 _INTERVAL_MINUTES = {
     "Hourly": 60,
     "Daily": 1440,
+    "Weekly": 10080,
 }
 
 # A sync that has been "running" longer than this is treated as dead, so a
@@ -42,6 +43,11 @@ def check_and_enqueue():
         interval_setting=settings.triple_whale_ads_sync_interval or "Disabled",
         sync_type="ads",
         enqueue_fn="alaiy_os_connector_triple_whale.triple_whale.ads.pull.run",
+    )
+    _maybe_enqueue(
+        interval_setting=settings.triple_whale_cohorts_sync_interval or "Disabled",
+        sync_type="cohorts",
+        enqueue_fn="alaiy_os_connector_triple_whale.triple_whale.cohorts.pull.run",
     )
 
 

@@ -29,38 +29,192 @@
   "outbound_clicks",
   "cb_reach",
   "visits",
-  "engagements"
+  "engagements",
+  "sb_returns",
+  "refunded",
+  "refunded_orders",
+  "cb_returns",
+  "refunded_cogs",
+  "return_rate",
+  "net_conversion_value",
+  "net_roas"
  ],
  "fields": [
-  {"fieldname": "metric_date", "fieldtype": "Date", "label": "Date", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
-  {"fieldname": "channel", "fieldtype": "Data", "label": "Channel", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1,
-   "description": "Triple Whale's standardized channel id, e.g. facebook-ads, google-ads, tiktok-ads."},
-  {"fieldname": "cb_identity", "fieldtype": "Column Break"},
-  {"fieldname": "currency", "fieldtype": "Data", "label": "Currency"},
-
-  {"fieldname": "sb_spend", "fieldtype": "Section Break", "label": "Spend & Delivery"},
-  {"fieldname": "spend", "fieldtype": "Currency", "label": "Ad Spend", "in_list_view": 1},
-  {"fieldname": "impressions", "fieldtype": "Int", "label": "Impressions"},
-  {"fieldname": "clicks", "fieldtype": "Int", "label": "Clicks"},
-  {"fieldname": "cb_spend", "fieldtype": "Column Break"},
-  {"fieldname": "ctr", "fieldtype": "Percent", "label": "CTR"},
-  {"fieldname": "cpc", "fieldtype": "Currency", "label": "CPC"},
-  {"fieldname": "cpm", "fieldtype": "Currency", "label": "CPM"},
-
-  {"fieldname": "sb_results", "fieldtype": "Section Break", "label": "Results"},
-  {"fieldname": "conversions", "fieldtype": "Float", "label": "Conversions", "precision": "2",
-   "description": "Fractional for channels that model conversions rather than counting them."},
-  {"fieldname": "conversion_value", "fieldtype": "Currency", "label": "Conversion Value", "in_list_view": 1},
-  {"fieldname": "cb_results", "fieldtype": "Column Break"},
-  {"fieldname": "roas", "fieldtype": "Float", "label": "ROAS", "precision": "2"},
-  {"fieldname": "cpa", "fieldtype": "Currency", "label": "CPA"},
-
-  {"fieldname": "sb_reach", "fieldtype": "Section Break", "label": "Reach & Engagement", "collapsible": 1},
-  {"fieldname": "reach", "fieldtype": "Int", "label": "Reach"},
-  {"fieldname": "outbound_clicks", "fieldtype": "Int", "label": "Outbound Clicks"},
-  {"fieldname": "cb_reach", "fieldtype": "Column Break"},
-  {"fieldname": "visits", "fieldtype": "Int", "label": "Visits"},
-  {"fieldname": "engagements", "fieldtype": "Int", "label": "Engagements"}
+  {
+   "fieldname": "metric_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Data",
+   "label": "Channel",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Triple Whale's standardized channel id, e.g. facebook-ads, google-ads, tiktok-ads."
+  },
+  {
+   "fieldname": "cb_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "label": "Currency"
+  },
+  {
+   "fieldname": "sb_spend",
+   "fieldtype": "Section Break",
+   "label": "Spend & Delivery"
+  },
+  {
+   "fieldname": "spend",
+   "fieldtype": "Currency",
+   "label": "Ad Spend",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "impressions",
+   "fieldtype": "Int",
+   "label": "Impressions"
+  },
+  {
+   "fieldname": "clicks",
+   "fieldtype": "Int",
+   "label": "Clicks"
+  },
+  {
+   "fieldname": "cb_spend",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ctr",
+   "fieldtype": "Percent",
+   "label": "CTR"
+  },
+  {
+   "fieldname": "cpc",
+   "fieldtype": "Currency",
+   "label": "CPC"
+  },
+  {
+   "fieldname": "cpm",
+   "fieldtype": "Currency",
+   "label": "CPM"
+  },
+  {
+   "fieldname": "sb_results",
+   "fieldtype": "Section Break",
+   "label": "Results"
+  },
+  {
+   "fieldname": "conversions",
+   "fieldtype": "Float",
+   "label": "Conversions",
+   "precision": "2",
+   "description": "Fractional for channels that model conversions rather than counting them."
+  },
+  {
+   "fieldname": "conversion_value",
+   "fieldtype": "Currency",
+   "label": "Conversion Value",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "cb_results",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "roas",
+   "fieldtype": "Float",
+   "label": "ROAS",
+   "precision": "2"
+  },
+  {
+   "fieldname": "cpa",
+   "fieldtype": "Currency",
+   "label": "CPA"
+  },
+  {
+   "fieldname": "sb_reach",
+   "fieldtype": "Section Break",
+   "label": "Reach & Engagement",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "reach",
+   "fieldtype": "Int",
+   "label": "Reach"
+  },
+  {
+   "fieldname": "outbound_clicks",
+   "fieldtype": "Int",
+   "label": "Outbound Clicks"
+  },
+  {
+   "fieldname": "cb_reach",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "visits",
+   "fieldtype": "Int",
+   "label": "Visits"
+  },
+  {
+   "fieldname": "engagements",
+   "fieldtype": "Int",
+   "label": "Engagements"
+  },
+  {
+   "fieldname": "sb_returns",
+   "fieldtype": "Section Break",
+   "label": "Returns"
+  },
+  {
+   "fieldname": "refunded",
+   "fieldtype": "Currency",
+   "label": "Refunded",
+   "description": "Refund value attributed to this channel, split across an order's touchpoints by their linear weight."
+  },
+  {
+   "fieldname": "refunded_orders",
+   "fieldtype": "Float",
+   "label": "Refunded Orders",
+   "precision": "2",
+   "description": "Fractional, because one refunded order is shared across every channel that touched it."
+  },
+  {
+   "fieldname": "cb_returns",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "refunded_cogs",
+   "fieldtype": "Currency",
+   "label": "Refunded COGS"
+  },
+  {
+   "fieldname": "return_rate",
+   "fieldtype": "Percent",
+   "label": "Return Rate",
+   "description": "Refunded value as a share of this channel's conversion value."
+  },
+  {
+   "fieldname": "net_conversion_value",
+   "fieldtype": "Currency",
+   "label": "Net Conversion Value",
+   "description": "Conversion value less refunds -- what the channel actually kept."
+  },
+  {
+   "fieldname": "net_roas",
+   "fieldtype": "Float",
+   "label": "Net ROAS",
+   "precision": "2",
+   "description": "Net conversion value over spend. A channel selling well but returning heavily separates from one that does not."
+  }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
@@ -71,8 +225,16 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1, "delete": 1, "email": 1, "export": 1, "print": 1,
-   "read": 1, "report": 1, "role": "System Manager", "share": 1, "write": 1
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
   }
  ],
  "sort_field": "metric_date",

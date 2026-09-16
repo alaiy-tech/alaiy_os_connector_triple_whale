@@ -391,3 +391,38 @@
 	.tw-kpi-value { font-size: 20px; }
 	.tw-spark { display: none; }
 }
+
+/* ---- cohort heatmap ---- */
+.tw-cohort-table th,
+.tw-cohort-table td {
+	padding: 8px 10px;
+	white-space: nowrap;
+}
+
+.tw-cohort-m {
+	font-weight: 500;
+}
+
+.tw-cell {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+	font-size: 12px;
+}
+
+/* An untracked month is blank rather than zero: the cohort has not reached
+   it yet, which is different from nobody having returned. */
+.tw-cell-none {
+	background: repeating-linear-gradient(
+		45deg,
+		transparent,
+		transparent 4px,
+		var(--tw-soft) 4px,
+		var(--tw-soft) 8px
+	);
+}
+
+.tw-cohort-note {
+	padding: 10px 16px 14px;
+	font-size: 11px;
+	color: var(--tw-muted);
+}

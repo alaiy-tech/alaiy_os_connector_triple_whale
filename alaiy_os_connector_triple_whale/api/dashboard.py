@@ -274,7 +274,7 @@ def get_state():
     """Whether the connector is configured, and when it last synced."""
     settings = frappe.get_single("Triple Whale Connector Settings")
     last = {}
-    for sync_type in ("metrics", "attribution", "ads"):
+    for sync_type in ("metrics", "attribution", "ads", "cohorts"):
         row = frappe.get_all(
             "Triple Whale Sync Log",
             filters={"sync_type": sync_type},
@@ -315,6 +315,8 @@ def get_connection_overview():
          "Triple Whale Product Metric"),
         ("ads", "Ad Channels", "triple_whale_ads_sync_interval",
          "Triple Whale Ad Metric"),
+        ("cohorts", "Cohort Retention", "triple_whale_cohorts_sync_interval",
+         "Triple Whale Cohort"),
     ):
         last = frappe.get_all(
             "Triple Whale Sync Log",
@@ -411,11 +413,25 @@ def _detected_integrations(days=30):
 
     found = {}
     for metric_id in seen:
-        for prefix, label in _INTEGRATION_PREFIXES.items():
-            if metric_id.startswith(prefix):
-                found.setdefault(label, 0)
-                found[label] += 1
-                break
+        # Longest prefix first, so "googleAds" is not claimed by a shorter
+        # entry that happens to also match.
+        label = next(
+            (
+                lbl
+                for pre, lbl in sorted(
+                    _INTEGRATION_PREFIXES.items(), key=lambda kv: -len(kv[0])
+                )
+                if metric_id.startswith(pre)
+            ),
+            None,
+        )
+        # A platform Triple Whale adds later has no entry here. Falling back
+        # to its own prefix keeps it visible rather than silently dropping a
+        # connected integration because this list has not caught up.
+        if label is None:
+            label = _infer_label(metric_id)
+        if label:
+            found[label] = found.get(label, 0) + 1
 
     # Channels that actually carry ad spend are worth stating outright rather
     # than inferring from a metric prefix.
@@ -455,6 +471,43 @@ def _detected_integrations(days=30):
     }
 
 
+def _infer_label(metric_id):
+    """
+    Best-effort platform name for a metric with no mapping entry.
+
+    Metric ids are camelCase and lead with their platform, so the leading
+    lowercase run is the platform. Anything shorter than three characters is
+    too ambiguous to label and is skipped.
+    """
+    lead = ""
+    for ch in metric_id:
+        if ch.islower() or ch == "_":
+            lead += ch
+        else:
+            break
+    lead = lead.strip("_")
+    if len(lead) < 3:
+        return None
+    # Generic metric families rather than an integration name.
+    if lead in _NOT_PLATFORMS:
+        return None
+    # A platform name is a prefix, so something follows it. A metric that is
+    # only its own name -- mer, orders, discounts -- is a store-wide figure
+    # rather than an integration.
+    if lead == metric_id:
+        return None
+    return lead[:1].upper() + lead[1:]
+
+
+# Leading words that begin a metric name without naming an integration.
+_NOT_PLATFORMS = {
+    "total", "blended", "custom", "new", "returning", "avg", "top", "unique",
+    "gross", "net", "cash", "cogs", "orders", "sales", "shipping", "taxes",
+    "discounts", "inventory", "handling", "payment", "responses", "pacing",
+    "forward", "enq", "kno", "benchmarks", "influencer", "conversion",
+}
+
+
 # Triple Whale's standardized channel id -> the platform label used elsewhere.
 _CHANNEL_LABELS = {
     "facebook-ads": "Meta Ads",
@@ -472,3 +525,55 @@ _CHANNEL_LABELS = {
     "taboola-ads": "Taboola",
     "applovin-ads": "AppLovin",
 }
+
+
+@frappe.whitelist()
+def get_cohorts(limit=12):
+    """
+    Retention and realised LTV by acquisition cohort, newest first.
+
+    Not bounded by the dashboard's date range: a cohort curve is about how far
+    customers have been followed since acquisition, which a reporting window
+    would truncate rather than filter.
+    """
+    limit = max(1, min(frappe.utils.cint(limit) or 12, 36))
+    months = frappe.db.sql(
+        """
+        SELECT DISTINCT cohort_month
+        FROM `tabTriple Whale Cohort`
+        ORDER BY cohort_month DESC
+        LIMIT %(limit)s
+        """,
+        {"limit": limit},
+    )
+    months = [m[0] for m in months]
+    if not months:
+        return {"cohorts": [], "max_months": 0}
+
+    rows = frappe.get_all(
+        "Triple Whale Cohort",
+        filters={"cohort_month": ["in", months]},
+        fields=[
+            "cohort_month", "months_since", "cohort_customers",
+            "active_customers", "retention_rate", "orders", "revenue",
+            "revenue_per_customer", "cumulative_revenue_per_customer",
+        ],
+        order_by="cohort_month desc, months_since asc",
+    )
+
+    grouped = {}
+    for r in rows:
+        grouped.setdefault(str(r["cohort_month"]), []).append(r)
+
+    return {
+        "currency": _report_currency(),
+        "max_months": max((r["months_since"] or 0) for r in rows),
+        "cohorts": [
+            {
+                "cohort_month": month,
+                "cohort_customers": entries[0]["cohort_customers"],
+                "periods": entries,
+            }
+            for month, entries in grouped.items()
+        ],
+    }

@@ -64,6 +64,13 @@ alaiy_os_sidebar_connector_items = [
         "label": "Ad Metrics",
         "icon": "megaphone",
     },
+    {
+        "connector_id": "triple_whale",
+        "link_type": "DocType",
+        "link_to": "Triple Whale Cohort",
+        "label": "Cohorts",
+        "icon": "users",
+    },
 ]
 
 # ---------------------------------------------------------------------------
