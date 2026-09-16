@@ -1,0 +1,11 @@
+{
+  "doctype": "Page",
+  "module": "Alaiy Os Connector Triple Whale",
+  "name": "triple-whale",
+  "page_name": "triple-whale",
+  "standard": "Yes",
+  "system_page": 0,
+  "title": "Triple Whale",
+  "icon": "chart-line",
+  "roles": []
+}

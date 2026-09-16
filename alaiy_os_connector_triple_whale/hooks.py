@@ -40,6 +40,25 @@ alaiy_os_sidebar_log_items = [
     }
 ]
 
+# Extra rows under this connector's own top-level sidebar section (Dashboard
+# is always added automatically by alaiy_os).
+alaiy_os_sidebar_connector_items = [
+    {
+        "connector_id": "triple_whale",
+        "link_type": "DocType",
+        "link_to": "Triple Whale Daily Metric",
+        "label": "Daily Metrics",
+        "icon": "calendar",
+    },
+    {
+        "connector_id": "triple_whale",
+        "link_type": "DocType",
+        "link_to": "Triple Whale Product Metric",
+        "label": "Product Metrics",
+        "icon": "box",
+    },
+]
+
 # ---------------------------------------------------------------------------
 # Scheduler
 # ---------------------------------------------------------------------------
