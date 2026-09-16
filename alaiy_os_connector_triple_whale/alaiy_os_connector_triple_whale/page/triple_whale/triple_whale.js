@@ -222,11 +222,20 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 					value: money(t.aov),
 					delta: delta(t.aov, p.aov),
 				}),
-				kpi({ label: "CAC", value: money(t.ncpa), hint: "per new customer" }),
+				kpi({
+					label: "CAC",
+					value: money(t.ncpa),
+					hint: t.ncpa == null ? "no new customers recorded" : "per new customer",
+				}),
 				kpi({
 					label: "New Customer Share",
 					value: pct(t.new_customer_share),
 					hint: "of revenue",
+				}),
+				kpi({
+					label: "LTV : CAC",
+					value: mult(t.ltv_cac_ratio),
+					hint: "above 3x is healthy",
 				}),
 				kpi({ label: "Site CVR", value: pct(t.site_conversion_rate) }),
 				kpi({ label: "Visitors", value: nf(t.visitors) }),

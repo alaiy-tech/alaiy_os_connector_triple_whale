@@ -38,7 +38,8 @@ def get_overview(days=30):
             "new_customer_revenue", "returning_customer_revenue",
             "total_refunded_price", "returns_percent", "gross_profit",
             "aov", "visitors", "sessions", "site_conversion_rate",
-            "unique_customers", "new_customers_percent",
+            "unique_customers", "new_customers_percent", "new_customer_orders",
+            "customer_ltv",
         ],
         order_by="metric_date asc",
     )
@@ -56,6 +57,7 @@ def get_overview(days=30):
         "visitors": 0,
         "sessions": 0,
         "unique_customers": 0,
+        "new_customer_orders": 0,
     }
     for r in rows:
         for key in totals:
@@ -73,8 +75,17 @@ def get_overview(days=30):
     )
     totals["aov"] = (sales / totals["orders"]) if totals["orders"] else None
     totals["blended_roas"] = (sales / spend) if spend else None
-    totals["ncpa"] = (
-        (spend / _new_customers(rows)) if _new_customers(rows) else None
+    totals["ncpa"] = _acquisition_cost(rows, spend, totals["new_customer_orders"])
+
+    # LTV is a standing figure rather than something to sum across days, so the
+    # latest day that reported one is the meaningful value.
+    ltv = next(
+        (r.get("customer_ltv") for r in reversed(rows) if r.get("customer_ltv")),
+        None,
+    )
+    totals["customer_ltv"] = ltv
+    totals["ltv_cac_ratio"] = (
+        (ltv / totals["ncpa"]) if (ltv and totals["ncpa"]) else None
     )
     totals["site_conversion_rate"] = (
         (totals["orders"] / totals["sessions"] * 100) if totals["sessions"] else None
@@ -91,15 +102,38 @@ def get_overview(days=30):
     }
 
 
-def _new_customers(rows):
-    """Approximate new customers from the share of customers flagged new."""
-    total = 0.0
-    for r in rows:
-        customers = r.get("unique_customers") or 0
-        share = r.get("new_customers_percent")
-        if customers and share is not None:
-            total += customers * float(share) / 100
-    return total
+def _acquisition_cost(rows, spend, new_customer_orders):
+    """
+    Cost to acquire one new customer, over the whole period.
+
+    Triple Whale reports this per day as newCustomersCpa, but a per-day CAC
+    cannot simply be averaged: a day with one acquisition would weigh as much
+    as a day with fifty. So the period figure is spend over new customers,
+    and the reported daily values are only used to recover the customer count
+    on days where nothing else gives it.
+    """
+    if not spend:
+        return None
+
+    customers = float(new_customer_orders or 0)
+
+    if not customers:
+        # Fall back to the share of unique customers flagged new.
+        for r in rows:
+            unique = r.get("unique_customers") or 0
+            share = r.get("new_customers_percent")
+            if unique and share is not None:
+                customers += unique * float(share) / 100
+
+    if not customers:
+        # Last resort: back the count out of the daily CAC Triple Whale gave.
+        for r in rows:
+            cac = r.get("ncpa")
+            day_spend = r.get("spend")
+            if cac and day_spend:
+                customers += float(day_spend) / float(cac)
+
+    return (spend / customers) if customers else None
 
 
 def _previous_totals(start, end):
