@@ -18,6 +18,22 @@ from frappe.utils import add_days, date_diff, today
 MIN_SPEND_FOR_ROAS = 100.0
 
 
+def _report_currency():
+    """
+    The currency the figures are actually denominated in.
+
+    Triple Whale aggregates in whatever currency the connector asks for, which
+    is not necessarily the Alaiy OS site currency -- stamping the site symbol
+    on figures Triple Whale returned in another currency would misstate them.
+    Falls back to the site default only when the connector leaves it unset,
+    which is also what Triple Whale does.
+    """
+    settings = frappe.get_single("Triple Whale Connector Settings")
+    return (settings.triple_whale_currency or "").strip() or frappe.defaults.get_global_default(
+        "currency"
+    )
+
+
 def _window(days):
     days = max(1, min(frappe.utils.cint(days) or 30, 365))
     end = today()
@@ -96,6 +112,7 @@ def get_overview(days=30):
 
     return {
         "period": {"start": start, "end": end, "days": len(rows)},
+        "currency": _report_currency(),
         "totals": totals,
         "series": rows,
         "previous": _previous_totals(start, end),
@@ -210,7 +227,11 @@ def get_top_products(days=30, limit=20, sort_by="product_revenue"):
         )
         r["return_rate"] = ((r.get("refunded_amount") or 0) / revenue * 100) if revenue else None
 
-    return {"period": {"start": start, "end": end}, "products": rows}
+    return {
+        "period": {"start": start, "end": end},
+        "currency": _report_currency(),
+        "products": rows,
+    }
 
 
 @frappe.whitelist()
@@ -243,7 +264,11 @@ def get_channels(days=30):
         r["cpm"] = (spend / impressions * 1000) if impressions else None
         r["roas"] = ((r.get("conversion_value") or 0) / spend) if spend else None
         r["cpa"] = (spend / conversions) if conversions else None
-    return {"period": {"start": start, "end": end}, "channels": rows}
+    return {
+        "period": {"start": start, "end": end},
+        "currency": _report_currency(),
+        "channels": rows,
+    }
 
 
 @frappe.whitelist()

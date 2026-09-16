@@ -15,6 +15,9 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 	const RANGES = [7, 30, 90];
 	let active_days = 30;
 	let charts = {};
+	// The currency the figures are denominated in, which is whatever Triple
+	// Whale aggregated in rather than the site default. Set from each response.
+	let currency = frappe.boot.sysdefaults.currency;
 
 	$(page.body).html(`
 		<div class="tw-page">
@@ -99,12 +102,24 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 
 	function money(v) {
 		if (v === null || v === undefined) return "—";
-		const sym = frappe.boot.sysdefaults.currency === "INR" ? "₹" : "";
+		const sym = frappe.model.get_currency_symbol
+			? frappe.model.get_currency_symbol(currency) || ""
+			: "";
 		const n = Number(v);
-		if (Math.abs(n) >= 1e7) return `${sym}${(n / 1e7).toFixed(2)}Cr`;
-		if (Math.abs(n) >= 1e5) return `${sym}${(n / 1e5).toFixed(2)}L`;
-		if (Math.abs(n) >= 1e3) return `${sym}${(n / 1e3).toFixed(1)}k`;
-		return `${sym}${nf(n, 0)}`;
+		const abs = Math.abs(n);
+		const sign = n < 0 ? "-" : "";
+		// Indian numbering groups by lakh and crore; everywhere else by
+		// thousand and million, so the abbreviation has to follow the
+		// currency rather than being fixed.
+		if (currency === "INR") {
+			if (abs >= 1e7) return `${sign}${sym}${(abs / 1e7).toFixed(2)}Cr`;
+			if (abs >= 1e5) return `${sign}${sym}${(abs / 1e5).toFixed(2)}L`;
+		} else {
+			if (abs >= 1e9) return `${sign}${sym}${(abs / 1e9).toFixed(2)}B`;
+			if (abs >= 1e6) return `${sign}${sym}${(abs / 1e6).toFixed(2)}M`;
+		}
+		if (abs >= 1e3) return `${sign}${sym}${(abs / 1e3).toFixed(1)}k`;
+		return `${sign}${sym}${nf(abs, 0)}`;
 	}
 
 	const pct = (v) => (v === null || v === undefined ? "—" : `${Number(v).toFixed(1)}%`);
@@ -158,6 +173,7 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 	}
 
 	function render_overview(d) {
+		if (d.currency) currency = d.currency;
 		const t = d.totals || {};
 		const p = d.previous || {};
 		const s = d.series || [];
@@ -166,7 +182,7 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 			s.length
 				? `${frappe.datetime.str_to_user(d.period.start)} – ${frappe.datetime.str_to_user(
 						d.period.end
-				  )} · ${s.length} days`
+				  )} · ${s.length} days · ${esc(currency)}`
 				: ""
 		);
 
@@ -364,6 +380,7 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 	}
 
 	function render_channels(d) {
+		if (d.currency) currency = d.currency;
 		const rows = d.channels || [];
 		if (!rows.length) {
 			$("#tw-channels").html(`<div class="tw-empty">No ad data for this period yet.</div>`);
@@ -404,6 +421,7 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 	}
 
 	function render_products(d) {
+		if (d.currency) currency = d.currency;
 		const rows = d.products || [];
 		if (!rows.length) {
 			$("#tw-products").html(
