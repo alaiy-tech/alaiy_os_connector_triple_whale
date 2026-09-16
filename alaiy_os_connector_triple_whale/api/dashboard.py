@@ -32,16 +32,36 @@ def _report_currency():
     return (settings.triple_whale_currency or "").strip() or None
 
 
-def _window(days):
-    days = max(1, min(frappe.utils.cint(days) or 30, 365))
-    end = today()
-    return add_days(end, -(days - 1)), end
+# A window longer than this makes the daily charts unreadable and the queries
+# slow without telling anyone anything the monthly cohort view does not.
+MAX_WINDOW_DAYS = 730
+
+
+def _window(days, start=None, end=None):
+    """
+    The reporting window, as (start, end) inclusive.
+
+    An explicit range wins over the day count, so the presets and the custom
+    picker share one path. A reversed range is swapped rather than rejected,
+    since picking the end date first is an easy thing to do.
+    """
+    if start and end:
+        start, end = str(start)[:10], str(end)[:10]
+        if start > end:
+            start, end = end, start
+        if date_diff(end, start) + 1 > MAX_WINDOW_DAYS:
+            start = add_days(end, -(MAX_WINDOW_DAYS - 1))
+        return start, end
+
+    days = max(1, min(frappe.utils.cint(days) or 30, MAX_WINDOW_DAYS))
+    anchor = str(end)[:10] if end else today()
+    return add_days(anchor, -(days - 1)), anchor
 
 
 @frappe.whitelist()
-def get_overview(days=30):
+def get_overview(days=30, start=None, end=None):
     """Headline figures for the period, plus the daily series behind them."""
-    start, end = _window(days)
+    start, end = _window(days, start, end)
 
     rows = frappe.get_all(
         "Triple Whale Daily Metric",
@@ -175,9 +195,9 @@ def _previous_totals(start, end):
 
 
 @frappe.whitelist()
-def get_top_products(days=30, limit=20, sort_by="product_revenue"):
+def get_top_products(days=30, limit=20, sort_by="product_revenue", start=None, end=None):
     """Per-product figures for the period, aggregated across days."""
-    start, end = _window(days)
+    start, end = _window(days, start, end)
 
     allowed_sorts = {
         "product_revenue", "units_sold", "attributed_spend",
@@ -233,9 +253,9 @@ def get_top_products(days=30, limit=20, sort_by="product_revenue"):
 
 
 @frappe.whitelist()
-def get_channels(days=30):
+def get_channels(days=30, start=None, end=None):
     """Ad performance by channel for the period."""
-    start, end = _window(days)
+    start, end = _window(days, start, end)
     rows = frappe.db.sql(
         """
         SELECT channel,

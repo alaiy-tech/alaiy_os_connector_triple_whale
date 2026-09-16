@@ -14,6 +14,9 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 
 	const RANGES = [7, 30, 90];
 	let active_days = 30;
+	// Set only when a custom range is chosen; presets leave it null so the
+	// window stays anchored to today rather than to whenever it was picked.
+	let custom = null;
 	let charts = {};
 	// The currency the figures are denominated in, as configured on the
 	// connector. Left unset until a response reports one, so an unconfigured
@@ -32,6 +35,9 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 								d === active_days ? "tw-range-active" : ""
 							}" data-days="${d}">${d}D</button>`
 					).join("")}
+					<button type="button" class="tw-range-btn tw-range-custom" data-custom="1">
+						<i class="fa fa-calendar"></i> Custom
+					</button>
 				</div>
 				<div id="tw-period" class="tw-period"></div>
 			</div>
@@ -93,11 +99,48 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 	`);
 
 	$(page.body).on("click", ".tw-range-btn", function () {
+		if ($(this).data("custom")) {
+			pick_range();
+			return;
+		}
+		custom = null;
 		active_days = parseInt($(this).data("days"), 10);
 		$(".tw-range-btn").removeClass("tw-range-active");
 		$(this).addClass("tw-range-active");
 		load();
 	});
+
+	function pick_range() {
+		const today = frappe.datetime.get_today();
+		const d = new frappe.ui.Dialog({
+			title: __("Custom Date Range"),
+			fields: [
+				{
+					fieldname: "from_date",
+					fieldtype: "Date",
+					label: __("From"),
+					reqd: 1,
+					default: custom ? custom.start : frappe.datetime.add_days(today, -29),
+				},
+				{
+					fieldname: "to_date",
+					fieldtype: "Date",
+					label: __("To"),
+					reqd: 1,
+					default: custom ? custom.end : today,
+				},
+			],
+			primary_action_label: __("Apply"),
+			primary_action(values) {
+				custom = { start: values.from_date, end: values.to_date };
+				$(".tw-range-btn").removeClass("tw-range-active");
+				$(".tw-range-custom").addClass("tw-range-active");
+				d.hide();
+				load();
+			},
+		});
+		d.show();
+	}
 
 	// ---- formatting -------------------------------------------------------
 
@@ -609,7 +652,9 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 
 	function load() {
 		destroy_charts();
-		const args = { days: active_days };
+		const args = custom
+			? { start: custom.start, end: custom.end }
+			: { days: active_days };
 		frappe.call({
 			method: "alaiy_os_connector_triple_whale.api.dashboard.get_state",
 			callback: (r) => r.message && render_state(r.message),
@@ -630,7 +675,7 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 		});
 		frappe.call({
 			method: "alaiy_os_connector_triple_whale.api.dashboard.get_top_products",
-			args: { days: active_days, limit: 25 },
+			args: Object.assign({ limit: 25 }, args),
 			callback: (r) => r.message && render_products(r.message),
 		});
 	}

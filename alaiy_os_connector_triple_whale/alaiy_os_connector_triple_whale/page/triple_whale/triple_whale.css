@@ -426,3 +426,15 @@
 	font-size: 11px;
 	color: var(--tw-muted);
 }
+
+/* ---- custom range button ---- */
+.tw-range-custom {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.tw-range-custom i {
+	font-size: 11px;
+	opacity: 0.8;
+}
