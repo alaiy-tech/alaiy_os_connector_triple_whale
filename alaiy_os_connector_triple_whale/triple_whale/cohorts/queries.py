@@ -69,6 +69,12 @@ ORDER BY cohort_month DESC, months_since ASC
 # actually present for that order so the parts sum back to the whole even
 # where the weights do not total one.
 #
+# The join is a LEFT join on purpose. A quarter of refunded value belongs to
+# orders the pixel never attributed, and an inner join silently dropped it --
+# channel figures that quietly omit a quarter of the money are worse than the
+# double-count they replaced. Those land under 'unattributed' instead, so the
+# parts still sum to the total refunded.
+#
 # Keyed on the refund's own event_date rather than the order's, so a refund
 # lands on the day the money actually went back.
 REFUNDS_BY_CHANNEL_QUERY = """
@@ -84,20 +90,22 @@ WITH weights AS (
 totals AS (
     SELECT order_id, sum(weight) AS total_weight
     FROM weights
+    WHERE weight > 0
     GROUP BY order_id
 )
 SELECT
     r.event_date AS event_date,
-    w.channel    AS channel,
-    sum(r.total_refunded_price * w.weight / t.total_weight) AS refunded,
-    sum(r.total_refunded_cogs  * w.weight / t.total_weight) AS refunded_cogs,
-    sum(w.weight / t.total_weight)                          AS refunded_orders,
-    countDistinct(r.refund_id)                              AS refund_events
+    if(t.total_weight > 0, w.channel, 'unattributed') AS channel,
+    sum(r.total_refunded_price * if(t.total_weight > 0, w.weight / t.total_weight, 1))
+        AS refunded,
+    sum(r.total_refunded_cogs * if(t.total_weight > 0, w.weight / t.total_weight, 1))
+        AS refunded_cogs,
+    sum(if(t.total_weight > 0, w.weight / t.total_weight, 1)) AS refunded_orders,
+    countDistinct(r.refund_id) AS refund_events
 FROM refunds_table r
-INNER JOIN weights w ON w.order_id = r.order_id
-INNER JOIN totals  t ON t.order_id = r.order_id
+LEFT JOIN weights w ON w.order_id = r.order_id
+LEFT JOIN totals  t ON t.order_id = r.order_id
 WHERE r.event_date BETWEEN @startDate AND @endDate
-  AND t.total_weight > 0
 GROUP BY event_date, channel
 ORDER BY event_date DESC, refunded ASC
 """
