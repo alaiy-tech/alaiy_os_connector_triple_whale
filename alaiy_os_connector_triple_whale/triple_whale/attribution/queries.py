@@ -7,73 +7,42 @@ Queries must reference @startDate / @endDate rather than literal dates -- the
 bound values travel in the request's `period` object, so these strings are
 constant and never interpolated with caller input.
 
-Table and column names follow Triple Whale's published warehouse schema; the
-catalogue is in docs/triple_whale/reference/llms.txt.
+Column names here were read off the live warehouse rather than the published
+table docs, which disagree with it in places.
 """
 
-# Per-product, per-day sales, funnel, ad attribution and refunds.
+# Per-product, per-day sales, funnel, ad attribution and returns.
 #
-# product_analytics_table carries sales and funnel figures together, so it is
-# the spine. Ad attribution and refunds live in separate tables at different
-# grains and are aggregated to product-day before joining, which keeps the
-# join from multiplying the spine's rows.
+# product_analytics_tvf already carries ad spend, funnel and returns alongside
+# sales at product-variant grain, so no join against ads_table or refunds_table
+# is needed -- Triple Whale has done the attribution join upstream.
+#
+# Grouped by day/product/variant because the source is finer than that (it also
+# breaks down by collection), which would otherwise double-count a product that
+# belongs to more than one collection.
 PRODUCT_METRICS_QUERY = """
-WITH product_base AS (
-    SELECT
-        event_date,
-        product_id,
-        variant_id,
-        ANY_VALUE(sku)           AS sku,
-        ANY_VALUE(product_title) AS product_title,
-        SUM(product_quantity_sold_in_order) AS units_sold,
-        SUM(product_revenue)                AS product_revenue,
-        COUNT(DISTINCT order_id)            AS orders,
-        SUM(product_views)                  AS product_views,
-        SUM(add_to_carts)                   AS add_to_carts
-    FROM product_analytics_table
-    WHERE event_date BETWEEN @startDate AND @endDate
-    GROUP BY event_date, product_id, variant_id
-),
-attribution AS (
-    SELECT
-        event_date,
-        product_id,
-        SUM(attributed_revenue) AS attributed_revenue,
-        SUM(spend)              AS attributed_spend
-    FROM ads_table
-    WHERE event_date BETWEEN @startDate AND @endDate
-      AND product_id IS NOT NULL
-    GROUP BY event_date, product_id
-),
-refunds AS (
-    SELECT
-        event_date,
-        product_id,
-        SUM(refunded_amount)   AS refunded_amount,
-        SUM(refunded_quantity) AS refunded_units
-    FROM refunds_table
-    WHERE event_date BETWEEN @startDate AND @endDate
-    GROUP BY event_date, product_id
-)
 SELECT
-    p.event_date,
-    p.product_id,
-    p.variant_id,
-    p.sku,
-    p.product_title,
-    p.units_sold,
-    p.product_revenue,
-    p.orders,
-    p.product_views,
-    p.add_to_carts,
-    a.attributed_revenue,
-    a.attributed_spend,
-    r.refunded_amount,
-    r.refunded_units
-FROM product_base p
-LEFT JOIN attribution a
-       ON a.event_date = p.event_date AND a.product_id = p.product_id
-LEFT JOIN refunds r
-       ON r.event_date = p.event_date AND r.product_id = p.product_id
-ORDER BY p.event_date DESC, p.product_revenue DESC
+    event_date,
+    product_id,
+    variant_id,
+    ANY_VALUE(sku)           AS sku,
+    ANY_VALUE(product_title) AS product_title,
+    ANY_VALUE(variant_title) AS variant_title,
+    ANY_VALUE(product_status) AS product_status,
+    ANY_VALUE(vendor)        AS vendor,
+    SUM(total_items_sold)    AS total_items_sold,
+    SUM(revenue)             AS revenue,
+    SUM(orders)              AS orders,
+    SUM(spend)               AS spend,
+    SUM(visits)              AS visits,
+    SUM(added_to_cart_items) AS added_to_cart_items,
+    SUM(clicks)              AS clicks,
+    SUM(impressions)         AS impressions,
+    SUM(returns)             AS returns,
+    SUM(new_customer_revenue) AS new_customer_revenue,
+    SUM(new_customer_orders)  AS new_customer_orders
+FROM product_analytics_tvf
+WHERE event_date BETWEEN @startDate AND @endDate
+GROUP BY event_date, product_id, variant_id
+ORDER BY event_date DESC, revenue DESC
 """

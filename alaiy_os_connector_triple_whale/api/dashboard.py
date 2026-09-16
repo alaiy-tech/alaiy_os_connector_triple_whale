@@ -73,8 +73,8 @@ def get_top_products(days=30, limit=20, sort_by="product_revenue"):
     start, end = _window(days)
 
     allowed_sorts = {
-        "product_revenue", "attributed_revenue", "units_sold",
-        "attributed_spend", "refunded_amount",
+        "product_revenue", "units_sold", "attributed_spend",
+        "refunded_amount", "new_customer_revenue",
     }
     if sort_by not in allowed_sorts:
         sort_by = "product_revenue"
@@ -86,15 +86,16 @@ def get_top_products(days=30, limit=20, sort_by="product_revenue"):
             product_id,
             MAX(sku)           AS sku,
             MAX(product_title) AS product_title,
+            MAX(vendor)        AS vendor,
             MAX(item)          AS item,
-            SUM(units_sold)         AS units_sold,
-            SUM(product_revenue)    AS product_revenue,
-            SUM(orders)             AS orders,
-            SUM(attributed_revenue) AS attributed_revenue,
-            SUM(attributed_spend)   AS attributed_spend,
-            SUM(product_views)      AS product_views,
-            SUM(add_to_carts)       AS add_to_carts,
-            SUM(refunded_amount)    AS refunded_amount
+            SUM(units_sold)           AS units_sold,
+            SUM(product_revenue)      AS product_revenue,
+            SUM(orders)               AS orders,
+            SUM(attributed_spend)     AS attributed_spend,
+            SUM(new_customer_revenue) AS new_customer_revenue,
+            SUM(product_views)        AS product_views,
+            SUM(add_to_carts)         AS add_to_carts,
+            SUM(refunded_amount)      AS refunded_amount
         FROM `tabTriple Whale Product Metric`
         WHERE metric_date BETWEEN %(start)s AND %(end)s
         GROUP BY product_id
@@ -112,7 +113,7 @@ def get_top_products(days=30, limit=20, sort_by="product_revenue"):
         spend = r.get("attributed_spend") or 0
         r["conversion_rate"] = ((r.get("orders") or 0) / views * 100) if views else None
         r["add_to_cart_rate"] = ((r.get("add_to_carts") or 0) / views * 100) if views else None
-        r["attributed_roas"] = ((r.get("attributed_revenue") or 0) / spend) if spend else None
+        r["attributed_roas"] = (revenue / spend) if spend else None
         r["return_rate"] = ((r.get("refunded_amount") or 0) / revenue * 100) if revenue else None
 
     return {"period": {"start": start, "end": end}, "products": rows}

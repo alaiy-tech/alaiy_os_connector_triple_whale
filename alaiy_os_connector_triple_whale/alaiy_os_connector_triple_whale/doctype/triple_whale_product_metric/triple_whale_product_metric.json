@@ -13,14 +13,22 @@
   "item",
   "cb_identity",
   "product_title",
+  "variant_title",
+  "vendor",
+  "product_status",
   "sb_sales",
   "units_sold",
   "product_revenue",
   "orders",
   "cb_sales",
-  "attributed_revenue",
+  "new_customer_revenue",
+  "new_customer_orders",
+  "sb_ads",
   "attributed_spend",
   "attributed_roas",
+  "cb_ads",
+  "clicks",
+  "impressions",
   "sb_funnel",
   "product_views",
   "add_to_carts",
@@ -29,7 +37,6 @@
   "add_to_cart_rate",
   "sb_returns",
   "refunded_amount",
-  "refunded_units",
   "cb_returns",
   "return_rate"
  ],
@@ -80,9 +87,25 @@
    "in_list_view": 1
   },
   {
+   "fieldname": "variant_title",
+   "fieldtype": "Data",
+   "label": "Variant Title"
+  },
+  {
+   "fieldname": "vendor",
+   "fieldtype": "Data",
+   "label": "Vendor",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "product_status",
+   "fieldtype": "Data",
+   "label": "Product Status"
+  },
+  {
    "fieldname": "sb_sales",
    "fieldtype": "Section Break",
-   "label": "Sales & Attribution"
+   "label": "Sales"
   },
   {
    "fieldname": "units_sold",
@@ -105,21 +128,46 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "attributed_revenue",
+   "fieldname": "new_customer_revenue",
    "fieldtype": "Currency",
-   "label": "Ad-Attributed Revenue",
-   "description": "Revenue Triple Whale attributes to paid campaigns, as opposed to all revenue for this product."
+   "label": "New Customer Revenue"
+  },
+  {
+   "fieldname": "new_customer_orders",
+   "fieldtype": "Int",
+   "label": "New Customer Orders"
+  },
+  {
+   "fieldname": "sb_ads",
+   "fieldtype": "Section Break",
+   "label": "Ad Attribution"
   },
   {
    "fieldname": "attributed_spend",
    "fieldtype": "Currency",
-   "label": "Attributed Ad Spend"
+   "label": "Attributed Ad Spend",
+   "description": "Ad spend Triple Whale attributes to this product."
   },
   {
    "fieldname": "attributed_roas",
    "fieldtype": "Float",
    "label": "Attributed ROAS",
-   "precision": "2"
+   "precision": "2",
+   "description": "Product revenue over the ad spend attributed to this product."
+  },
+  {
+   "fieldname": "cb_ads",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "clicks",
+   "fieldtype": "Int",
+   "label": "Clicks"
+  },
+  {
+   "fieldname": "impressions",
+   "fieldtype": "Int",
+   "label": "Impressions"
   },
   {
    "fieldname": "sb_funnel",
@@ -158,12 +206,7 @@
   {
    "fieldname": "refunded_amount",
    "fieldtype": "Currency",
-   "label": "Refunded Amount"
-  },
-  {
-   "fieldname": "refunded_units",
-   "fieldtype": "Int",
-   "label": "Refunded Units"
+   "label": "Returned Value"
   },
   {
    "fieldname": "cb_returns",

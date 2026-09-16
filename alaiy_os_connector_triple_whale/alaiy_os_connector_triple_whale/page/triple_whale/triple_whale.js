@@ -191,7 +191,7 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 					</td>
 					<td class="tw-right">${fmt_num(r.units_sold)}</td>
 					<td class="tw-right">${fmt_money(r.product_revenue)}</td>
-					<td class="tw-right">${fmt_money(r.attributed_revenue)}</td>
+					<td class="tw-right">${fmt_money(r.attributed_spend)}</td>
 					<td class="tw-right">${fmt_x(r.attributed_roas)}</td>
 					<td class="tw-right">${fmt_pct(r.conversion_rate)}</td>
 					<td class="tw-right">${fmt_pct(r.return_rate)}</td>
@@ -207,7 +207,7 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 							<th>Product</th>
 							<th class="tw-right">Units</th>
 							<th class="tw-right">Revenue</th>
-							<th class="tw-right">Ad-Attributed</th>
+							<th class="tw-right">Ad Spend</th>
 							<th class="tw-right">ROAS</th>
 							<th class="tw-right">CVR</th>
 							<th class="tw-right">Returns</th>

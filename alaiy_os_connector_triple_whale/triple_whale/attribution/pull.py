@@ -19,23 +19,28 @@ from alaiy_os_connector_triple_whale.triple_whale.auth import (
 from alaiy_os_connector_triple_whale.triple_whale.sync_log import run_logged
 from alaiy_os_connector_triple_whale.triple_whale.window import as_float, sync_window
 
-# SQL column -> Triple Whale Product Metric fieldname. product_id/variant_id
-# are part of the row key and handled separately in upsert().
+# Warehouse column -> Triple Whale Product Metric fieldname. product_id and
+# variant_id are part of the row key and handled separately in upsert().
 SQL_FIELD_MAP = {
     "sku": "sku",
     "product_title": "product_title",
-    "units_sold": "units_sold",
-    "product_revenue": "product_revenue",
+    "variant_title": "variant_title",
+    "vendor": "vendor",
+    "product_status": "product_status",
+    "total_items_sold": "units_sold",
+    "revenue": "product_revenue",
     "orders": "orders",
-    "attributed_revenue": "attributed_revenue",
-    "attributed_spend": "attributed_spend",
-    "product_views": "product_views",
-    "add_to_carts": "add_to_carts",
-    "refunded_amount": "refunded_amount",
-    "refunded_units": "refunded_units",
+    "spend": "attributed_spend",
+    "visits": "product_views",
+    "added_to_cart_items": "add_to_carts",
+    "clicks": "clicks",
+    "impressions": "impressions",
+    "returns": "refunded_amount",
+    "new_customer_revenue": "new_customer_revenue",
+    "new_customer_orders": "new_customer_orders",
 }
 
-_TEXT_FIELDS = ("sku", "product_title")
+_TEXT_FIELDS = ("sku", "product_title", "variant_title", "vendor", "product_status")
 
 
 def run(trigger="scheduled", log_name=None):
@@ -76,17 +81,22 @@ def extract_rows(response):
     """
     Pull the result rows out of an /orcabase/api/sql response.
 
-    The documented shape is {"success": bool, "message": str, "data": [...]}.
-    A success:false body carries the reason in `message`, which is raised
-    rather than treated as an empty result -- a malformed query would
-    otherwise look like a period with no sales.
+    A successful query returns a bare JSON array of row objects, despite the
+    published spec describing a {"success", "message", "data"} envelope. Both
+    are handled: the envelope form still appears on failures, where `message`
+    carries the reason and is raised rather than being treated as an empty
+    result -- a malformed query would otherwise look like a period with no
+    sales.
     """
+    if isinstance(response, list):
+        return [r for r in response if isinstance(r, dict)]
+
     if not isinstance(response, dict):
         raise TripleWhaleAPIError(
             f"Unexpected SQL response type: {type(response).__name__}"
         )
 
-    if response.get("success") is False:
+    if response.get("success") is False or response.get("message"):
         raise TripleWhaleAPIError(
             f"SQL query rejected: {response.get('message') or 'no reason given'}"
         )
@@ -143,18 +153,20 @@ def _set_derived_rates(doc, row):
     Rates are computed here rather than in SQL so a zero denominator yields a
     blank field instead of failing the whole query.
     """
-    views = as_float(row.get("product_views")) or 0
-    carts = as_float(row.get("add_to_carts")) or 0
+    views = as_float(row.get("visits")) or 0
+    carts = as_float(row.get("added_to_cart_items")) or 0
     orders = as_float(row.get("orders")) or 0
-    revenue = as_float(row.get("product_revenue")) or 0
-    spend = as_float(row.get("attributed_spend")) or 0
-    attributed = as_float(row.get("attributed_revenue")) or 0
-    refunded = as_float(row.get("refunded_amount")) or 0
+    revenue = as_float(row.get("revenue")) or 0
+    spend = as_float(row.get("spend")) or 0
+    returned = as_float(row.get("returns")) or 0
 
     doc.conversion_rate = (orders / views * 100) if views else None
     doc.add_to_cart_rate = (carts / views * 100) if views else None
-    doc.attributed_roas = (attributed / spend) if spend else None
-    doc.return_rate = (refunded / revenue * 100) if revenue else None
+    # The warehouse reports spend at product grain but not a separate
+    # ad-attributed revenue column, so ROAS here is product revenue over the
+    # ad spend attributed to that product.
+    doc.attributed_roas = (revenue / spend) if spend else None
+    doc.return_rate = (returned / revenue * 100) if revenue else None
 
 
 def resolve_item(sku):
