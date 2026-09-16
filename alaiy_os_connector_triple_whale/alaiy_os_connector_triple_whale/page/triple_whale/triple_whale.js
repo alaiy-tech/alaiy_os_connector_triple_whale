@@ -50,6 +50,19 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 
 			<div class="tw-card">
 				<div class="tw-card-header">
+					<span class="tw-icon-badge"><i class="fa fa-bullhorn"></i></span>
+					<div class="tw-card-header-text">
+						<h5>Channels</h5>
+						<p>Spend and return by ad platform.</p>
+					</div>
+				</div>
+				<div class="tw-card-body">
+					<div id="tw-channels"></div>
+				</div>
+			</div>
+
+			<div class="tw-card">
+				<div class="tw-card-header">
 					<span class="tw-icon-badge"><i class="fa fa-cube"></i></span>
 					<div class="tw-card-header-text">
 						<h5>Products</h5>
@@ -115,7 +128,7 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 			return;
 		}
 
-		const parts = ["metrics", "attribution"].map((k) => {
+		const parts = ["metrics", "attribution", "ads"].map((k) => {
 			const l = s.last_sync[k];
 			if (!l) return `<span class="tw-pill tw-pill-grey">${k}: never run</span>`;
 			const cls =
@@ -134,7 +147,7 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 					<strong>${frappe.utils.escape_html(s.shop_domain || "")}</strong>
 					<span class="tw-text-muted">${fmt_num(s.daily_rows)} days · ${fmt_num(
 			s.product_rows
-		)} product rows cached</span>
+		)} product · ${fmt_num(s.ad_rows)} channel rows cached</span>
 				</div>
 				<div class="tw-state-pills">${parts.join("")}</div>
 			</div>`);
@@ -164,6 +177,55 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 				kpi("Return Rate", fmt_pct(t.returns_percent)),
 			].join("")
 		);
+	}
+
+	function channel_label(id) {
+		return String(id || "")
+			.replace(/-/g, " ")
+			.replace(/\w/g, (ch) => ch.toUpperCase());
+	}
+
+	function render_channels(d) {
+		const rows = d.channels || [];
+		if (!rows.length) {
+			$("#tw-channels").html(
+				`<div class="tw-empty">No ad data for this period yet.</div>`
+			);
+			return;
+		}
+		const body = rows
+			.map(
+				(r) => `
+				<tr>
+					<td>${frappe.utils.escape_html(channel_label(r.channel))}</td>
+					<td class="tw-right">${fmt_money(r.spend)}</td>
+					<td class="tw-right">${fmt_num(r.impressions)}</td>
+					<td class="tw-right">${fmt_num(r.clicks)}</td>
+					<td class="tw-right">${fmt_pct(r.ctr)}</td>
+					<td class="tw-right">${fmt_money(r.cpc)}</td>
+					<td class="tw-right">${fmt_money(r.conversion_value)}</td>
+					<td class="tw-right">${fmt_x(r.roas)}</td>
+				</tr>`
+			)
+			.join("");
+		$("#tw-channels").html(`
+			<div class="tw-table-wrap">
+				<table class="tw-table">
+					<thead>
+						<tr>
+							<th>Channel</th>
+							<th class="tw-right">Spend</th>
+							<th class="tw-right">Impressions</th>
+							<th class="tw-right">Clicks</th>
+							<th class="tw-right">CTR</th>
+							<th class="tw-right">CPC</th>
+							<th class="tw-right">Conv. Value</th>
+							<th class="tw-right">ROAS</th>
+						</tr>
+					</thead>
+					<tbody>${body}</tbody>
+				</table>
+			</div>`);
 	}
 
 	function render_products(d) {
@@ -219,15 +281,13 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 	}
 
 	function run_sync() {
-		frappe.call({
-			method: "alaiy_os_connector_triple_whale.api.sync.trigger_metrics_sync",
-			callback: () => {
-				frappe.show_alert({ message: __("Sync queued"), indicator: "blue" });
-				frappe.call({
-					method:
-						"alaiy_os_connector_triple_whale.api.sync.trigger_attribution_sync",
-				});
-			},
+		const methods = [
+			"alaiy_os_connector_triple_whale.api.sync.trigger_metrics_sync",
+			"alaiy_os_connector_triple_whale.api.sync.trigger_attribution_sync",
+			"alaiy_os_connector_triple_whale.api.sync.trigger_ads_sync",
+		];
+		Promise.all(methods.map((method) => frappe.call({ method }))).then(() => {
+			frappe.show_alert({ message: __("Syncs queued"), indicator: "blue" });
 		});
 	}
 
@@ -240,6 +300,11 @@ frappe.pages["triple-whale"].on_page_load = function (wrapper) {
 			method: "alaiy_os_connector_triple_whale.api.dashboard.get_overview",
 			args: { days: active_days },
 			callback: (r) => r.message && render_overview(r.message),
+		});
+		frappe.call({
+			method: "alaiy_os_connector_triple_whale.api.dashboard.get_channels",
+			args: { days: active_days },
+			callback: (r) => r.message && render_channels(r.message),
 		});
 		frappe.call({
 			method: "alaiy_os_connector_triple_whale.api.dashboard.get_top_products",

@@ -1,0 +1,68 @@
+{
+ "actions": [],
+ "creation": "2026-09-16 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "metric_id",
+  "title",
+  "value",
+  "text_value",
+  "value_type"
+ ],
+ "fields": [
+  {
+   "fieldname": "metric_id",
+   "fieldtype": "Data",
+   "label": "Metric",
+   "in_list_view": 1,
+   "columns": 3,
+   "description": "Triple Whale's own metric id, e.g. facebookCpm, klaviyoSalesPercent."
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "value",
+   "fieldtype": "Float",
+   "label": "Value",
+   "in_list_view": 1,
+   "columns": 2,
+   "precision": "6"
+  },
+  {
+   "fieldname": "text_value",
+   "fieldtype": "Data",
+   "label": "Text Value",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "Set instead of Value when Triple Whale reports a non-numeric metric, such as the pacing forecasts."
+  },
+  {
+   "fieldname": "value_type",
+   "fieldtype": "Data",
+   "label": "Type",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "currency, decimal, percent, duration or string, as reported by Triple Whale."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-16 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Alaiy Os Connector Triple Whale",
+ "name": "Triple Whale Metric Value",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "metric_id",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0
+}

@@ -10,10 +10,29 @@ This connector is **read-only**. Nothing is ever written back to Triple Whale.
 
 Two sync slots, both inbound:
 
-| Slot | Source | Lands in |
+| Sync | Source | Lands in |
 |---|---|---|
 | **Metrics** | `POST /summary-page/get-data` | `Triple Whale Daily Metric` — one row per day, store-wide |
 | **Attribution** | `POST /orcabase/api/sql` | `Triple Whale Product Metric` — one row per product per day |
+| **Ads** | `POST /orcabase/api/sql` | `Triple Whale Ad Metric` — one row per channel per day |
+
+The registry exposes two sync slots, so Metrics and Attribution are wired to
+those; Ads runs on its own schedule and from the page's Sync Now.
+
+### Nothing is dropped
+
+The Summary Page returns ~750 metrics covering every integration Triple Whale
+supports. Around 60 are promoted to real columns on `Triple Whale Daily
+Metric` for charting and filtering; **all the rest are stored too**, in its
+All Metrics child table, one row per metric per day.
+
+The only metrics skipped are those that were zero on *every* day of the
+window — the signature of an integration this account does not connect.
+Deciding that across the window rather than per day is what stops a real zero
+(a connected channel that simply spent nothing on a Sunday) being mistaken
+for a disconnected one. A handful of metrics are string-typed rather than
+numeric; those keep their raw text instead of being dropped for failing to
+parse.
 
 Both run nightly by default. Triple Whale's summary figures are aggregate and
 settle overnight, so there is nothing to gain from a tighter schedule.
@@ -52,14 +71,20 @@ triple_whale/
 ├── sync_jobs.py       Scheduler -- decides what is due
 ├── metrics/
 │   └── pull.py        Summary Page -> Triple Whale Daily Metric
-└── attribution/
-    ├── queries.py     Warehouse SQL
-    └── pull.py        SQL results -> Triple Whale Product Metric
+├── attribution/
+│   ├── queries.py     Warehouse SQL
+│   └── pull.py        SQL results -> Triple Whale Product Metric
+└── ads/
+    ├── queries.py     Per-channel warehouse SQL
+    └── pull.py        SQL results -> Triple Whale Ad Metric
 ```
 
-Each `pull.py` owns its own field mapping (`SUMMARY_FIELD_MAP`,
-`SQL_FIELD_MAP`) because the two read from different sources into different
-doctypes; there is no overlap to share.
+Each `pull.py` owns its own field mapping because each reads a different
+source into a different doctype; there is no overlap to share.
+
+Ad metrics are one row per channel rather than columns per platform, so Meta,
+Google, TikTok and anything connected later arrive without a schema change,
+and spend is directly comparable across them.
 
 ## Setup
 
@@ -100,7 +125,7 @@ with exponential backoff, honouring `Retry-After` when present.
 | Shop Domain | The Shop URL exactly as shown in Triple Whale under Settings → Store. Sent as `shopDomain`/`shopId`/`shop`. |
 | Currency | Aggregation currency. Defaults to the Triple Whale account currency when blank. |
 | Company | Alaiy OS company the figures belong to. |
-| Metrics / Attribution Sync Interval | `Disabled`, `Hourly` or `Daily`. |
+| Metrics / Attribution / Ads Sync Interval | `Disabled`, `Hourly` or `Daily`. |
 | Lookback Days | How far back each sync re-fetches. Attribution is restated for several days after an order, so a window wider than one day is required. Defaults to 7. |
 
 ## Why syncs re-fetch a window

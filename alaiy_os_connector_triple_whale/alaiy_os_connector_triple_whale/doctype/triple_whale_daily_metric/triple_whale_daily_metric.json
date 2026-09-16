@@ -9,75 +9,515 @@
   "metric_date",
   "sb_revenue",
   "total_sales",
-  "gross_sales",
   "order_revenue",
+  "gross_sales",
   "orders",
+  "orders_with_amount",
   "cb_revenue",
   "aov",
+  "units_sold",
+  "discounts",
+  "taxes",
+  "shipping_price",
+  "sb_customers",
   "new_customer_revenue",
   "returning_customer_revenue",
+  "new_customer_orders",
+  "returning_customer_orders",
+  "cb_customers",
   "new_customers_percent",
+  "unique_customers",
+  "customer_ltv",
+  "customer_frequency",
+  "ltv_cac_ratio",
   "sb_spend",
   "spend",
   "mer",
   "blended_roas",
+  "blended_attributed_roas",
   "cb_spend",
   "blended_cpa",
   "ncpa",
   "new_customer_roas",
   "sb_profit",
   "net_profit",
+  "gross_profit",
   "net_margin",
-  "cost_of_goods",
+  "contribution_profit",
   "cb_profit",
+  "cost_of_goods",
+  "shipping_costs",
+  "handling_fees",
+  "payment_gateway_costs",
   "poas",
+  "sb_returns",
   "total_refunded_price",
+  "cb_returns",
   "returns_percent",
-  "sb_raw",
-  "channel_breakdown",
+  "sb_traffic",
+  "visitors",
+  "unique_visitors",
+  "sessions",
+  "page_views",
+  "new_visitors_percent",
+  "cb_traffic",
+  "site_conversion_rate",
+  "add_to_carts",
+  "add_to_cart_rate",
+  "bounce_rate",
+  "avg_session_duration",
+  "sb_channels",
+  "facebook_spend",
+  "facebook_roas",
+  "facebook_conversion_value",
+  "cb_channels",
+  "google_spend",
+  "google_roas",
+  "google_conversion_value",
+  "sb_email",
+  "klaviyo_sales",
+  "klaviyo_sales_percent",
+  "cb_email",
+  "klaviyo_flow_sales",
+  "klaviyo_campaign_sales",
+  "sb_inventory",
+  "inventory_items",
+  "inventory_value",
+  "cb_inventory",
+  "inventory_cost",
+  "sb_all",
+  "all_metrics",
   "raw_payload"
  ],
  "fields": [
-  {"fieldname": "metric_date", "fieldtype": "Date", "label": "Date", "reqd": 1, "unique": 1, "in_list_view": 1},
-
-  {"fieldname": "sb_revenue", "fieldtype": "Section Break", "label": "Revenue"},
-  {"fieldname": "total_sales", "fieldtype": "Currency", "label": "Total Sales", "in_list_view": 1},
-  {"fieldname": "gross_sales", "fieldtype": "Currency", "label": "Gross Sales"},
-  {"fieldname": "order_revenue", "fieldtype": "Currency", "label": "Order Revenue"},
-  {"fieldname": "orders", "fieldtype": "Int", "label": "Orders"},
-  {"fieldname": "cb_revenue", "fieldtype": "Column Break"},
-  {"fieldname": "aov", "fieldtype": "Currency", "label": "Average Order Value"},
-  {"fieldname": "new_customer_revenue", "fieldtype": "Currency", "label": "New Customer Revenue"},
-  {"fieldname": "returning_customer_revenue", "fieldtype": "Currency", "label": "Returning Customer Revenue"},
-  {"fieldname": "new_customers_percent", "fieldtype": "Percent", "label": "New Customers %"},
-
-  {"fieldname": "sb_spend", "fieldtype": "Section Break", "label": "Ad Spend & Efficiency"},
-  {"fieldname": "spend", "fieldtype": "Currency", "label": "Blended Ad Spend", "in_list_view": 1},
-  {"fieldname": "mer", "fieldtype": "Float", "label": "MER", "precision": "2", "in_list_view": 1,
-   "description": "Marketing Efficiency Ratio -- total revenue divided by total ad spend."},
-  {"fieldname": "blended_roas", "fieldtype": "Float", "label": "Blended ROAS", "precision": "2"},
-  {"fieldname": "cb_spend", "fieldtype": "Column Break"},
-  {"fieldname": "blended_cpa", "fieldtype": "Currency", "label": "Blended CPA",
-   "description": "Blended cost per acquisition across all customers."},
-  {"fieldname": "ncpa", "fieldtype": "Currency", "label": "New Customer CPA",
-   "description": "Cost to acquire a genuinely new customer -- the CAC figure."},
-  {"fieldname": "new_customer_roas", "fieldtype": "Float", "label": "New Customer ROAS", "precision": "2"},
-
-  {"fieldname": "sb_profit", "fieldtype": "Section Break", "label": "Profitability"},
-  {"fieldname": "net_profit", "fieldtype": "Currency", "label": "Net Profit", "in_list_view": 1},
-  {"fieldname": "net_margin", "fieldtype": "Percent", "label": "Net Margin"},
-  {"fieldname": "cost_of_goods", "fieldtype": "Currency", "label": "Cost of Goods"},
-  {"fieldname": "cb_profit", "fieldtype": "Column Break"},
-  {"fieldname": "poas", "fieldtype": "Float", "label": "POAS", "precision": "2",
-   "description": "Profit on ad spend."},
-  {"fieldname": "total_refunded_price", "fieldtype": "Currency", "label": "Refunded Sales"},
-  {"fieldname": "returns_percent", "fieldtype": "Percent", "label": "Return Rate"},
-
-  {"fieldname": "sb_raw", "fieldtype": "Section Break", "label": "Detail", "collapsible": 1},
-  {"fieldname": "channel_breakdown", "fieldtype": "Long Text", "label": "Channel Breakdown (JSON)",
-   "description": "Per-channel spend and ROAS, keyed by Triple Whale's standardized channel IDs."},
-  {"fieldname": "raw_payload", "fieldtype": "Long Text", "label": "Raw Payload (JSON)",
-   "description": "The Summary Page response as received, kept so new metrics can be backfilled without re-fetching."}
+  {
+   "fieldname": "metric_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sb_revenue",
+   "fieldtype": "Section Break",
+   "label": "Revenue"
+  },
+  {
+   "fieldname": "total_sales",
+   "fieldtype": "Currency",
+   "label": "Total Sales",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "order_revenue",
+   "fieldtype": "Currency",
+   "label": "Order Revenue"
+  },
+  {
+   "fieldname": "gross_sales",
+   "fieldtype": "Currency",
+   "label": "Gross Sales"
+  },
+  {
+   "fieldname": "orders",
+   "fieldtype": "Int",
+   "label": "Orders"
+  },
+  {
+   "fieldname": "orders_with_amount",
+   "fieldtype": "Int",
+   "label": "Non-Zero Orders"
+  },
+  {
+   "fieldname": "cb_revenue",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "aov",
+   "fieldtype": "Currency",
+   "label": "Average Order Value"
+  },
+  {
+   "fieldname": "units_sold",
+   "fieldtype": "Int",
+   "label": "Units Sold"
+  },
+  {
+   "fieldname": "discounts",
+   "fieldtype": "Currency",
+   "label": "Discounts"
+  },
+  {
+   "fieldname": "taxes",
+   "fieldtype": "Currency",
+   "label": "Net Taxes"
+  },
+  {
+   "fieldname": "shipping_price",
+   "fieldtype": "Currency",
+   "label": "Shipping Charged"
+  },
+  {
+   "fieldname": "sb_customers",
+   "fieldtype": "Section Break",
+   "label": "Customers"
+  },
+  {
+   "fieldname": "new_customer_revenue",
+   "fieldtype": "Currency",
+   "label": "New Customer Revenue"
+  },
+  {
+   "fieldname": "returning_customer_revenue",
+   "fieldtype": "Currency",
+   "label": "Returning Customer Revenue"
+  },
+  {
+   "fieldname": "new_customer_orders",
+   "fieldtype": "Int",
+   "label": "New Customer Orders"
+  },
+  {
+   "fieldname": "returning_customer_orders",
+   "fieldtype": "Int",
+   "label": "Returning Customer Orders"
+  },
+  {
+   "fieldname": "cb_customers",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "new_customers_percent",
+   "fieldtype": "Percent",
+   "label": "New Customers %"
+  },
+  {
+   "fieldname": "unique_customers",
+   "fieldtype": "Int",
+   "label": "Unique Customers"
+  },
+  {
+   "fieldname": "customer_ltv",
+   "fieldtype": "Currency",
+   "label": "Customer LTV",
+   "description": "Unique customer lifetime value as Triple Whale computes it."
+  },
+  {
+   "fieldname": "customer_frequency",
+   "fieldtype": "Float",
+   "label": "Purchase Frequency",
+   "precision": "2"
+  },
+  {
+   "fieldname": "ltv_cac_ratio",
+   "fieldtype": "Float",
+   "label": "LTV : CAC",
+   "precision": "2",
+   "description": "Triple Whale's ltvCpa: lifetime value over acquisition cost."
+  },
+  {
+   "fieldname": "sb_spend",
+   "fieldtype": "Section Break",
+   "label": "Ad Spend & Efficiency"
+  },
+  {
+   "fieldname": "spend",
+   "fieldtype": "Currency",
+   "label": "Blended Ad Spend",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "mer",
+   "fieldtype": "Float",
+   "label": "MER",
+   "precision": "2",
+   "in_list_view": 1,
+   "description": "Marketing Efficiency Ratio."
+  },
+  {
+   "fieldname": "blended_roas",
+   "fieldtype": "Float",
+   "label": "Blended ROAS",
+   "precision": "2"
+  },
+  {
+   "fieldname": "blended_attributed_roas",
+   "fieldtype": "Float",
+   "label": "Blended Attributed ROAS",
+   "precision": "2"
+  },
+  {
+   "fieldname": "cb_spend",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "blended_cpa",
+   "fieldtype": "Currency",
+   "label": "Blended CPA"
+  },
+  {
+   "fieldname": "ncpa",
+   "fieldtype": "Currency",
+   "label": "New Customer CPA",
+   "description": "Cost to acquire a new customer -- the CAC figure."
+  },
+  {
+   "fieldname": "new_customer_roas",
+   "fieldtype": "Float",
+   "label": "New Customer ROAS",
+   "precision": "2"
+  },
+  {
+   "fieldname": "sb_profit",
+   "fieldtype": "Section Break",
+   "label": "Profitability"
+  },
+  {
+   "fieldname": "net_profit",
+   "fieldtype": "Currency",
+   "label": "Net Profit",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "gross_profit",
+   "fieldtype": "Currency",
+   "label": "Gross Profit"
+  },
+  {
+   "fieldname": "net_margin",
+   "fieldtype": "Percent",
+   "label": "Net Margin"
+  },
+  {
+   "fieldname": "contribution_profit",
+   "fieldtype": "Currency",
+   "label": "Contribution Profit"
+  },
+  {
+   "fieldname": "cb_profit",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cost_of_goods",
+   "fieldtype": "Currency",
+   "label": "COGS"
+  },
+  {
+   "fieldname": "shipping_costs",
+   "fieldtype": "Currency",
+   "label": "Shipping Costs"
+  },
+  {
+   "fieldname": "handling_fees",
+   "fieldtype": "Currency",
+   "label": "Handling Fees"
+  },
+  {
+   "fieldname": "payment_gateway_costs",
+   "fieldtype": "Currency",
+   "label": "Payment Gateway Costs"
+  },
+  {
+   "fieldname": "poas",
+   "fieldtype": "Float",
+   "label": "POAS",
+   "precision": "2"
+  },
+  {
+   "fieldname": "sb_returns",
+   "fieldtype": "Section Break",
+   "label": "Returns"
+  },
+  {
+   "fieldname": "total_refunded_price",
+   "fieldtype": "Currency",
+   "label": "Refunded Sales"
+  },
+  {
+   "fieldname": "cb_returns",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "returns_percent",
+   "fieldtype": "Percent",
+   "label": "Return Rate"
+  },
+  {
+   "fieldname": "sb_traffic",
+   "fieldtype": "Section Break",
+   "label": "Site Traffic & Funnel"
+  },
+  {
+   "fieldname": "visitors",
+   "fieldtype": "Int",
+   "label": "Visitors"
+  },
+  {
+   "fieldname": "unique_visitors",
+   "fieldtype": "Int",
+   "label": "Unique Visitors"
+  },
+  {
+   "fieldname": "sessions",
+   "fieldtype": "Int",
+   "label": "Sessions"
+  },
+  {
+   "fieldname": "page_views",
+   "fieldtype": "Int",
+   "label": "Page Views"
+  },
+  {
+   "fieldname": "new_visitors_percent",
+   "fieldtype": "Percent",
+   "label": "New Visitors %"
+  },
+  {
+   "fieldname": "cb_traffic",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "site_conversion_rate",
+   "fieldtype": "Percent",
+   "label": "Site Conversion Rate"
+  },
+  {
+   "fieldname": "add_to_carts",
+   "fieldtype": "Int",
+   "label": "Add to Carts"
+  },
+  {
+   "fieldname": "add_to_cart_rate",
+   "fieldtype": "Percent",
+   "label": "Add to Cart Rate"
+  },
+  {
+   "fieldname": "bounce_rate",
+   "fieldtype": "Percent",
+   "label": "Bounce Rate"
+  },
+  {
+   "fieldname": "avg_session_duration",
+   "fieldtype": "Int",
+   "label": "Avg Session Duration (s)"
+  },
+  {
+   "fieldname": "sb_channels",
+   "fieldtype": "Section Break",
+   "label": "Channel Spend",
+   "description": "Per-channel detail lives in Triple Whale Ad Metric; these are the blended roll-ups."
+  },
+  {
+   "fieldname": "facebook_spend",
+   "fieldtype": "Currency",
+   "label": "Meta Spend"
+  },
+  {
+   "fieldname": "facebook_roas",
+   "fieldtype": "Float",
+   "label": "Meta ROAS",
+   "precision": "2"
+  },
+  {
+   "fieldname": "facebook_conversion_value",
+   "fieldtype": "Currency",
+   "label": "Meta Conversion Value"
+  },
+  {
+   "fieldname": "cb_channels",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "google_spend",
+   "fieldtype": "Currency",
+   "label": "Google Spend"
+  },
+  {
+   "fieldname": "google_roas",
+   "fieldtype": "Float",
+   "label": "Google ROAS",
+   "precision": "2"
+  },
+  {
+   "fieldname": "google_conversion_value",
+   "fieldtype": "Currency",
+   "label": "Google Conversion Value"
+  },
+  {
+   "fieldname": "sb_email",
+   "fieldtype": "Section Break",
+   "label": "Email & SMS",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "klaviyo_sales",
+   "fieldtype": "Currency",
+   "label": "Klaviyo Attributed Sales"
+  },
+  {
+   "fieldname": "klaviyo_sales_percent",
+   "fieldtype": "Percent",
+   "label": "Klaviyo Sales %"
+  },
+  {
+   "fieldname": "cb_email",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "klaviyo_flow_sales",
+   "fieldtype": "Currency",
+   "label": "Klaviyo Flow Sales"
+  },
+  {
+   "fieldname": "klaviyo_campaign_sales",
+   "fieldtype": "Currency",
+   "label": "Klaviyo Campaign Sales"
+  },
+  {
+   "fieldname": "sb_inventory",
+   "fieldtype": "Section Break",
+   "label": "Inventory",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "inventory_items",
+   "fieldtype": "Int",
+   "label": "Inventory Items"
+  },
+  {
+   "fieldname": "inventory_value",
+   "fieldtype": "Currency",
+   "label": "Inventory Value"
+  },
+  {
+   "fieldname": "cb_inventory",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inventory_cost",
+   "fieldtype": "Currency",
+   "label": "Inventory Cost"
+  },
+  {
+   "fieldname": "sb_all",
+   "fieldtype": "Section Break",
+   "label": "All Metrics",
+   "collapsible": 1,
+   "description": "Every metric Triple Whale reported with a non-zero value, including integrations without a dedicated column above."
+  },
+  {
+   "fieldname": "all_metrics",
+   "fieldtype": "Table",
+   "label": "All Metrics",
+   "options": "Triple Whale Metric Value"
+  },
+  {
+   "fieldname": "raw_payload",
+   "fieldtype": "Long Text",
+   "label": "Raw Payload (JSON)",
+   "description": "The response as received, so a metric can be backfilled without re-fetching."
+  }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
@@ -88,8 +528,16 @@
  "owner": "Administrator",
  "permissions": [
   {
-   "create": 1, "delete": 1, "email": 1, "export": 1, "print": 1,
-   "read": 1, "report": 1, "role": "System Manager", "share": 1, "write": 1
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
   }
  ],
  "sort_field": "metric_date",

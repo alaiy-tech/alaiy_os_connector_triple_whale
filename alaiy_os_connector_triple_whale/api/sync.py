@@ -40,6 +40,20 @@ def trigger_attribution_sync():
 
 
 @frappe.whitelist()
+def trigger_ads_sync():
+    """Manually enqueue a per-channel ad performance pull."""
+    log = get_or_create_log("ads", "manual")
+    frappe.enqueue(
+        "alaiy_os_connector_triple_whale.triple_whale.ads.pull.run",
+        queue="long",
+        timeout=900,
+        trigger="manual",
+        log_name=log.name,
+    )
+    return {"queued": True, "log_name": log.name}
+
+
+@frappe.whitelist()
 def get_sync_status(sync_type=None):
     """
     Return the most recent Triple Whale Sync Log rows, newest first.

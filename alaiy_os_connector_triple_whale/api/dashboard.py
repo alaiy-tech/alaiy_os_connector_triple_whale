@@ -120,11 +120,44 @@ def get_top_products(days=30, limit=20, sort_by="product_revenue"):
 
 
 @frappe.whitelist()
+def get_channels(days=30):
+    """Ad performance by channel for the period."""
+    start, end = _window(days)
+    rows = frappe.db.sql(
+        """
+        SELECT channel,
+               SUM(spend)            AS spend,
+               SUM(impressions)      AS impressions,
+               SUM(clicks)           AS clicks,
+               SUM(conversions)      AS conversions,
+               SUM(conversion_value) AS conversion_value
+        FROM `tabTriple Whale Ad Metric`
+        WHERE metric_date BETWEEN %(start)s AND %(end)s
+        GROUP BY channel
+        ORDER BY spend DESC
+        """,
+        {"start": start, "end": end},
+        as_dict=True,
+    )
+    for r in rows:
+        spend = r.get("spend") or 0
+        clicks = r.get("clicks") or 0
+        impressions = r.get("impressions") or 0
+        conversions = r.get("conversions") or 0
+        r["ctr"] = (clicks / impressions * 100) if impressions else None
+        r["cpc"] = (spend / clicks) if clicks else None
+        r["cpm"] = (spend / impressions * 1000) if impressions else None
+        r["roas"] = ((r.get("conversion_value") or 0) / spend) if spend else None
+        r["cpa"] = (spend / conversions) if conversions else None
+    return {"period": {"start": start, "end": end}, "channels": rows}
+
+
+@frappe.whitelist()
 def get_state():
     """Whether the connector is configured, and when it last synced."""
     settings = frappe.get_single("Triple Whale Connector Settings")
     last = {}
-    for sync_type in ("metrics", "attribution"):
+    for sync_type in ("metrics", "attribution", "ads"):
         row = frappe.get_all(
             "Triple Whale Sync Log",
             filters={"sync_type": sync_type},
@@ -142,4 +175,5 @@ def get_state():
         "last_sync": last,
         "daily_rows": frappe.db.count("Triple Whale Daily Metric"),
         "product_rows": frappe.db.count("Triple Whale Product Metric"),
+        "ad_rows": frappe.db.count("Triple Whale Ad Metric"),
     }

@@ -57,6 +57,13 @@ alaiy_os_sidebar_connector_items = [
         "label": "Product Metrics",
         "icon": "box",
     },
+    {
+        "connector_id": "triple_whale",
+        "link_type": "DocType",
+        "link_to": "Triple Whale Ad Metric",
+        "label": "Ad Metrics",
+        "icon": "megaphone",
+    },
 ]
 
 # ---------------------------------------------------------------------------

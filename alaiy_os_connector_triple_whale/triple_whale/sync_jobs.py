@@ -38,6 +38,11 @@ def check_and_enqueue():
         sync_type="attribution",
         enqueue_fn="alaiy_os_connector_triple_whale.triple_whale.attribution.pull.run",
     )
+    _maybe_enqueue(
+        interval_setting=settings.triple_whale_ads_sync_interval or "Disabled",
+        sync_type="ads",
+        enqueue_fn="alaiy_os_connector_triple_whale.triple_whale.ads.pull.run",
+    )
 
 
 def _maybe_enqueue(interval_setting, sync_type, enqueue_fn):

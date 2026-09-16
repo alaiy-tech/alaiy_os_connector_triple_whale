@@ -17,6 +17,7 @@
   "triple_whale_metrics_sync_interval",
   "cb_schedule",
   "triple_whale_attribution_sync_interval",
+  "triple_whale_ads_sync_interval",
   "sb_window",
   "triple_whale_lookback_days"
  ],
@@ -91,6 +92,14 @@
    "label": "Attribution Sync Interval",
    "options": "Disabled\nHourly\nDaily",
    "default": "Daily"
+  },
+  {
+   "fieldname": "triple_whale_ads_sync_interval",
+   "fieldtype": "Select",
+   "label": "Ads Sync Interval",
+   "options": "Disabled\nHourly\nDaily",
+   "default": "Daily",
+   "description": "Per-channel ad performance from Meta, Google and every other connected platform."
   },
   {
    "fieldname": "sb_window",
