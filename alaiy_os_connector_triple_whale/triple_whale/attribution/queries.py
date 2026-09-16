@@ -17,9 +17,11 @@ table docs, which disagree with it in places.
 # sales at product-variant grain, so no join against ads_table or refunds_table
 # is needed -- Triple Whale has done the attribution join upstream.
 #
-# Grouped by day/product/variant because the source is finer than that (it also
-# breaks down by collection), which would otherwise double-count a product that
-# belongs to more than one collection.
+# The table carries a collection_id, so it looked like it might report a
+# product once per collection it belongs to. Checked against the live
+# warehouse: it does not -- the grain is already one row per product-variant
+# per day. The GROUP BY is therefore a no-op today and is kept only so the
+# figures stay correct if that grain ever widens.
 PRODUCT_METRICS_QUERY = """
 SELECT
     event_date,
