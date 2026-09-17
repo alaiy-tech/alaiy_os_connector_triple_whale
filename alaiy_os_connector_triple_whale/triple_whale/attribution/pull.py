@@ -227,7 +227,7 @@ def resolve_item(sku):
     if not sku:
         return None
 
-    cached = _item_cache.get(sku)
+    cached = _item_cache.get(sku, _MISSING)
     if cached is not _MISSING:
         return cached
 
