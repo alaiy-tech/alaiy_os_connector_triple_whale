@@ -57,3 +57,59 @@ WHERE event_date BETWEEN @startDate AND @endDate
 GROUP BY event_date, page
 ORDER BY event_date DESC, sessions DESC
 """
+
+# Of the sessions that opened a collection page, how many went on to open a
+# product page afterwards, per collection page per day.
+#
+# page_view_number orders the page views within a session. The same page view is
+# repeated across attribution rows, so sessions are counted distinct, and a
+# session is split at midnight (it is matched to product views on the same day).
+CLICK_THROUGH_QUERY = r"""
+SELECT
+    c.event_date                                      AS event_date,
+    c.page                                            AS page,
+    uniqExact(c.session_id)                           AS sessions,
+    uniqExactIf(c.session_id, p.max_pv > c.min_pv)    AS clicked
+FROM (
+    SELECT event_date, session_id,
+           replaceRegexpOne(url, '\\?.*$', '') AS page,
+           min(page_view_number)               AS min_pv
+    FROM customer_journey_table
+    WHERE page_type = 'collection' AND event_date BETWEEN @startDate AND @endDate
+    GROUP BY event_date, session_id, page
+) AS c
+LEFT JOIN (
+    SELECT event_date, session_id, max(page_view_number) AS max_pv
+    FROM customer_journey_table
+    WHERE page_type = 'product' AND event_date BETWEEN @startDate AND @endDate
+    GROUP BY event_date, session_id
+) AS p ON c.session_id = p.session_id AND c.event_date = p.event_date
+GROUP BY c.event_date, c.page
+"""
+
+# Where the sessions that began on a product or collection page came from, grouped
+# into a handful of sources.
+#
+# The raw channel values are many and uneven (a typo of facebook, several email
+# tools), so they are grouped here to keep the table small. The order matters:
+# Direct first, then email and SMS, then paid, then organic and social.
+TRAFFIC_SOURCES_QUERY = r"""
+SELECT
+    event_date,
+    multiIf(
+        ifNull(channel, '') = 'Direct', 'Direct',
+        ifNull(utm_medium, '') IN ('email', 'sms')
+            OR ifNull(channel, '') IN ('klaviyo', 'OrderlyEmails', 'swym-Wishlist'), 'Email & SMS',
+        ifNull(channel, '') LIKE '%-ads' OR ifNull(utm_medium, '') IN ('cpc', 'paid'), 'Paid ads',
+        ifNull(channel, '') = 'organic_and_social', 'Organic & social',
+        ifNull(utm_medium, '') = 'affiliate', 'Affiliates',
+        'Other'
+    )                                                          AS traffic_source,
+    replaceRegexpOne(landing_page, '\\?.*$', '')               AS page,
+    uniqExact(session_id)                                      AS sessions,
+    uniqExactIf(session_id, coalesce(is_new_visitor, 0) = 1)   AS new_visitors
+FROM sessions_table
+WHERE event_date BETWEEN @startDate AND @endDate
+  AND match(landing_page, '^(https?://[^/]+)?/(products|collections)/')
+GROUP BY event_date, traffic_source, page
+"""

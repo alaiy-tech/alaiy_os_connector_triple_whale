@@ -1,9 +1,9 @@
 {
  "actions": [],
  "autoname": "hash",
- "creation": "2026-10-01 00:00:00.000000",
+ "creation": "2026-10-02 00:00:00.000000",
  "doctype": "DocType",
- "description": "Daily page views per product, collection and other storefront page. Counts only; no visitor or customer data.",
+ "description": "Daily sessions by traffic source for sessions that began on a product or collection page. Counts only.",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
@@ -11,9 +11,9 @@
   "page_type",
   "page_path",
   "handle",
-  "page_views",
+  "traffic_source",
   "sessions",
-  "clicked_through"
+  "new_visitors"
  ],
  "fields": [
   {
@@ -30,19 +30,16 @@
    "fieldtype": "Select",
    "label": "Page Type",
    "reqd": 1,
-   "in_list_view": 1,
    "in_standard_filter": 1,
-   "options": "product\ncollection\nhome\nsearch\nother",
-   "search_index": 1
+   "options": "product\ncollection\nhome\nsearch\nother"
   },
   {
    "fieldname": "page_path",
    "fieldtype": "Data",
    "length": 255,
-   "label": "Page Path",
+   "label": "Landing Page",
    "reqd": 1,
-   "in_list_view": 1,
-   "description": "The page's path with any query string removed, e.g. /collections/some-brand."
+   "in_list_view": 1
   },
   {
    "fieldname": "handle",
@@ -50,34 +47,35 @@
    "length": 255,
    "label": "Handle",
    "in_standard_filter": 1,
-   "search_index": 1,
-   "description": "The last part of the path: the product or collection handle."
+   "search_index": 1
   },
   {
-   "fieldname": "page_views",
-   "fieldtype": "Int",
-   "label": "Page Views",
+   "fieldname": "traffic_source",
+   "fieldtype": "Data",
+   "label": "Traffic Source",
+   "reqd": 1,
    "in_list_view": 1,
-   "description": "Distinct page views. Triple Whale repeats each view across attribution rows, so rows are never counted."
+   "in_standard_filter": 1,
+   "description": "Direct, Email & SMS, Paid ads, Organic & social, Affiliates or Other."
   },
   {
    "fieldname": "sessions",
    "fieldtype": "Int",
-   "label": "Sessions"
+   "label": "Sessions",
+   "in_list_view": 1
   },
   {
-   "fieldname": "clicked_through",
+   "fieldname": "new_visitors",
    "fieldtype": "Int",
-   "label": "Clicked Through",
-   "description": "Collection pages only: sessions that went on to open a product page after this page."
+   "label": "New Visitors"
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-01 00:00:00.000000",
+ "modified": "2026-10-02 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Alaiy Os Connector Triple Whale",
- "name": "Triple Whale Page Metric",
+ "name": "Triple Whale Traffic Metric",
  "owner": "Administrator",
  "permissions": [
   {
