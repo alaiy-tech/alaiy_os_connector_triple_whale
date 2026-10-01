@@ -294,7 +294,7 @@ def get_state():
     """Whether the connector is configured, and when it last synced."""
     settings = frappe.get_single("Triple Whale Connector Settings")
     last = {}
-    for sync_type in ("metrics", "attribution", "ads", "cohorts"):
+    for sync_type in ("metrics", "attribution", "ads", "cohorts", "pages"):
         row = frappe.get_all(
             "Triple Whale Sync Log",
             filters={"sync_type": sync_type},
@@ -337,6 +337,8 @@ def get_connection_overview():
          "Triple Whale Ad Metric"),
         ("cohorts", "Cohort Retention", "triple_whale_cohorts_sync_interval",
          "Triple Whale Cohort"),
+        ("pages", "Page Traffic", "triple_whale_pages_sync_interval",
+         "Triple Whale Page Metric"),
     ):
         last = frappe.get_all(
             "Triple Whale Sync Log",

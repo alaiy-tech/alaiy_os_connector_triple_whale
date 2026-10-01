@@ -71,6 +71,13 @@ alaiy_os_sidebar_connector_items = [
         "label": "Cohorts",
         "icon": "users",
     },
+    {
+        "connector_id": "triple_whale",
+        "link_type": "DocType",
+        "link_to": "Triple Whale Page Metric",
+        "label": "Page Views",
+        "icon": "eye",
+    },
 ]
 
 # ---------------------------------------------------------------------------

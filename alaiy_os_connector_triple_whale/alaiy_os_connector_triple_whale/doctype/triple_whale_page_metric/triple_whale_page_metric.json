@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-01 00:00:00.000000",
+ "doctype": "DocType",
+ "description": "Daily page views per product, collection and other storefront page. Counts only; no visitor or customer data.",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "metric_date",
+  "page_type",
+  "page_path",
+  "handle",
+  "page_views",
+  "sessions"
+ ],
+ "fields": [
+  {
+   "fieldname": "metric_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "page_type",
+   "fieldtype": "Select",
+   "label": "Page Type",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "options": "product\ncollection\nhome\nsearch\nother",
+   "search_index": 1
+  },
+  {
+   "fieldname": "page_path",
+   "fieldtype": "Data",
+   "length": 255,
+   "label": "Page Path",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "The page's path with any query string removed, e.g. /collections/some-brand."
+  },
+  {
+   "fieldname": "handle",
+   "fieldtype": "Data",
+   "length": 255,
+   "label": "Handle",
+   "in_standard_filter": 1,
+   "search_index": 1,
+   "description": "The last part of the path: the product or collection handle."
+  },
+  {
+   "fieldname": "page_views",
+   "fieldtype": "Int",
+   "label": "Page Views",
+   "in_list_view": 1,
+   "description": "Distinct page views. Triple Whale repeats each view across attribution rows, so rows are never counted."
+  },
+  {
+   "fieldname": "sessions",
+   "fieldtype": "Int",
+   "label": "Sessions"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Alaiy Os Connector Triple Whale",
+ "name": "Triple Whale Page Metric",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "metric_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}
