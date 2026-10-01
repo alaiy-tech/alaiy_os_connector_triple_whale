@@ -117,8 +117,8 @@
    "fieldtype": "Select",
    "label": "Page Traffic Sync Interval",
    "options": "Disabled\nHourly\nDaily",
-   "default": "Daily",
-   "description": "Page views, landing pages, sessions and bounces for the storefront. Counts only. The first run reaches back 90 days."
+   "default": "Disabled",
+   "description": "Page views, landing pages, sessions and bounces for the storefront. Counts only. Disabled until switched on; the first run reaches back 90 days, so run it once by hand and check the log before scheduling it."
   },
   {
    "fieldname": "sb_window",
