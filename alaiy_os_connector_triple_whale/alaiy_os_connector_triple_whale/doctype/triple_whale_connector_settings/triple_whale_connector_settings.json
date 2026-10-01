@@ -19,6 +19,7 @@
   "triple_whale_attribution_sync_interval",
   "triple_whale_ads_sync_interval",
   "triple_whale_cohorts_sync_interval",
+  "triple_whale_pages_sync_interval",
   "sb_window",
   "triple_whale_lookback_days"
  ],
@@ -110,6 +111,14 @@
    "options": "Disabled\nDaily\nWeekly",
    "default": "Weekly",
    "description": "Retention curves move slowly and the query scans two years of orders, so weekly is enough."
+  },
+  {
+   "fieldname": "triple_whale_pages_sync_interval",
+   "fieldtype": "Select",
+   "label": "Page Traffic Sync Interval",
+   "options": "Disabled\nHourly\nDaily",
+   "default": "Daily",
+   "description": "Page views, landing pages, sessions and bounces for the storefront. Counts only. The first run reaches back 90 days."
   },
   {
    "fieldname": "sb_window",

@@ -1,0 +1,131 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-01 00:00:00.000000",
+ "doctype": "DocType",
+ "description": "Daily sessions, visitors, bounces and time on site for sessions that began on each page. Counts only.",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "metric_date",
+  "landing_page",
+  "page_type",
+  "handle",
+  "sessions",
+  "unique_visitors",
+  "new_visitors",
+  "bounces",
+  "page_views",
+  "time_on_site",
+  "add_to_carts",
+  "orders",
+  "revenue"
+ ],
+ "fields": [
+  {
+   "fieldname": "metric_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "landing_page",
+   "fieldtype": "Data",
+   "length": 255,
+   "label": "Landing Page",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "The entry page's path with any query string removed."
+  },
+  {
+   "fieldname": "page_type",
+   "fieldtype": "Select",
+   "label": "Page Type",
+   "in_standard_filter": 1,
+   "options": "product\ncollection\nhome\nsearch\nother",
+   "search_index": 1
+  },
+  {
+   "fieldname": "handle",
+   "fieldtype": "Data",
+   "length": 255,
+   "label": "Handle",
+   "search_index": 1
+  },
+  {
+   "fieldname": "sessions",
+   "fieldtype": "Int",
+   "label": "Sessions",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "unique_visitors",
+   "fieldtype": "Int",
+   "label": "Unique Visitors"
+  },
+  {
+   "fieldname": "new_visitors",
+   "fieldtype": "Int",
+   "label": "New Visitors"
+  },
+  {
+   "fieldname": "bounces",
+   "fieldtype": "Int",
+   "label": "Bounces"
+  },
+  {
+   "fieldname": "page_views",
+   "fieldtype": "Int",
+   "label": "Page Views"
+  },
+  {
+   "fieldname": "time_on_site",
+   "fieldtype": "Float",
+   "label": "Time on Site (seconds)",
+   "description": "Total seconds across sessions that did not bounce. Divide by sessions minus bounces for the average."
+  },
+  {
+   "fieldname": "add_to_carts",
+   "fieldtype": "Int",
+   "label": "Add to Carts"
+  },
+  {
+   "fieldname": "orders",
+   "fieldtype": "Int",
+   "label": "Orders"
+  },
+  {
+   "fieldname": "revenue",
+   "fieldtype": "Currency",
+   "label": "Revenue"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Alaiy Os Connector Triple Whale",
+ "name": "Triple Whale Landing Page Metric",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "metric_date",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -68,6 +68,20 @@ def trigger_cohorts_sync():
 
 
 @frappe.whitelist()
+def trigger_pages_sync():
+    """Manually enqueue a storefront page traffic pull."""
+    log = get_or_create_log("pages", "manual")
+    frappe.enqueue(
+        "alaiy_os_connector_triple_whale.triple_whale.pages.pull.run",
+        queue="long",
+        timeout=1800,
+        trigger="manual",
+        log_name=log.name,
+    )
+    return {"queued": True, "log_name": log.name}
+
+
+@frappe.whitelist()
 def get_sync_status(sync_type=None):
     """
     Return the most recent Triple Whale Sync Log rows, newest first.

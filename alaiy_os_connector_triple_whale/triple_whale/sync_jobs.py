@@ -49,6 +49,11 @@ def check_and_enqueue():
         sync_type="cohorts",
         enqueue_fn="alaiy_os_connector_triple_whale.triple_whale.cohorts.pull.run",
     )
+    _maybe_enqueue(
+        interval_setting=settings.triple_whale_pages_sync_interval or "Disabled",
+        sync_type="pages",
+        enqueue_fn="alaiy_os_connector_triple_whale.triple_whale.pages.pull.run",
+    )
 
 
 def _maybe_enqueue(interval_setting, sync_type, enqueue_fn):
