@@ -21,14 +21,18 @@ from alaiy_os_connector_triple_whale.triple_whale.attribution.pull import extrac
 from alaiy_os_connector_triple_whale.triple_whale.auth import TripleWhaleClient
 from alaiy_os_connector_triple_whale.triple_whale.pages.paths import clean_path, handle_for, page_type_for
 from alaiy_os_connector_triple_whale.triple_whale.pages.queries import (
+    CLICK_THROUGH_QUERY,
     LANDING_PAGES_QUERY,
     PAGE_VIEWS_QUERY,
+    TRAFFIC_SOURCES_QUERY,
 )
+from alaiy_os_connector_triple_whale.triple_whale.pages.shapes import merge_clicks, traffic_values
 from alaiy_os_connector_triple_whale.triple_whale.sync_log import run_logged
 from alaiy_os_connector_triple_whale.triple_whale.window import as_float, sync_window
 
 PAGE_DOCTYPE = "Triple Whale Page Metric"
 LANDING_DOCTYPE = "Triple Whale Landing Page Metric"
+TRAFFIC_DOCTYPE = "Triple Whale Traffic Metric"
 
 # The first run has no history to extend, so it reaches back this far; later
 # runs only re-fetch the configured lookback.
@@ -44,7 +48,9 @@ def windows():
     (a partial day would be restated on the next run anyway)."""
     start, _ = sync_window()
     end = add_days(today(), -1)
-    if not frappe.db.count(PAGE_DOCTYPE):
+    # A table with no rows yet is filled from the full backfill, so a table added
+    # later (traffic sources) is populated for the whole history on its first run.
+    if not frappe.db.count(PAGE_DOCTYPE) or not frappe.db.count(TRAFFIC_DOCTYPE):
         start = add_days(today(), -BACKFILL_DAYS)
     ranges = []
     cursor = getdate(start)
@@ -57,31 +63,34 @@ def windows():
 
 
 def run(trigger="scheduled", log_name=None):
-    """Pull page views and landing page performance for the sync window."""
+    """Pull page views, landing pages, click-through and traffic sources for the sync window."""
 
     def worker(log):
         client = TripleWhaleClient()
         ranges = windows()
         log.pages_total = len(ranges)
         log.pages_done = 0
-        pages = landings = 0
+        pages = landings = traffic = 0
 
         for start, end in ranges:
             page_rows = extract_rows(client.sql(PAGE_VIEWS_QUERY, start, end))
             landing_rows = extract_rows(client.sql(LANDING_PAGES_QUERY, start, end))
+            click_rows = extract_rows(client.sql(CLICK_THROUGH_QUERY, start, end))
+            traffic_rows = extract_rows(client.sql(TRAFFIC_SOURCES_QUERY, start, end))
 
-            pages += _replace(PAGE_DOCTYPE, start, end, _page_values(page_rows))
+            pages += _replace(PAGE_DOCTYPE, start, end, merge_clicks(_page_values(page_rows), click_rows))
             landings += _replace(LANDING_DOCTYPE, start, end, _landing_values(landing_rows))
+            traffic += _replace(TRAFFIC_DOCTYPE, start, end, traffic_values(traffic_rows))
 
             log.pages_done += 1
-            log.items_processed = pages + landings
+            log.items_processed = pages + landings + traffic
             log.save(ignore_permissions=True)
             frappe.db.commit()
 
-        log.items_created = pages + landings
+        log.items_created = pages + landings + traffic
         log.items_updated = 0
         log.items_failed = 0
-        log.log_messages = f"Page rows: {pages}. Landing page rows: {landings}."
+        log.log_messages = f"Page rows: {pages}. Landing page rows: {landings}. Traffic source rows: {traffic}."
         frappe.db.commit()
 
     run_logged("pages", trigger, log_name, worker)
@@ -102,6 +111,7 @@ def _page_values(rows):
             "handle": handle_for(path),
             "page_views": int(as_float(row.get("page_views")) or 0),
             "sessions": int(as_float(row.get("sessions")) or 0),
+            "clicked_through": 0,
         })
     return values
 
