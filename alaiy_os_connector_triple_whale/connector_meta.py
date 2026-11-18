@@ -3,6 +3,29 @@ Single source of truth for this connector's registration metadata.
 Consumed by setup/install.py → upserted into alaiy_os's OS Connector Registry.
 """
 
+# Columns of Triple Whale Sync Log, named the way the Connector Health page reads them.
+_LOG_FIELDS = {
+    "processed": "items_processed",
+    "changed": ["items_created", "items_updated"],
+    "failed": "items_failed",
+    "error": "error_message",
+}
+
+
+def _health(key, label, sync_type, interval_setting, expects_rows=True):
+    return {
+        "key": key,
+        "label": label,
+        "direction": "pull",
+        "log_doctype": "Triple Whale Sync Log",
+        "log_filter": {"sync_type": sync_type},
+        "fields": _LOG_FIELDS,
+        "interval_setting": interval_setting,
+        "scheduled": True,
+        "expects_rows": expects_rows,
+    }
+
+
 connector_meta = {
     "connector_id": "triple_whale",
     "connector_name": "Triple Whale",
@@ -25,4 +48,11 @@ connector_meta = {
     "sync_items_label": "Attribution",
     "is_enabled": 0,
     "connection_status": "untested",
+    "health": [
+        _health("metrics", "Metrics sync", "metrics", "triple_whale_metrics_sync_interval"),
+        _health("attribution", "Attribution sync", "attribution", "triple_whale_attribution_sync_interval", expects_rows=False),
+        _health("ads", "Ads sync", "ads", "triple_whale_ads_sync_interval", expects_rows=False),
+        _health("cohorts", "Cohorts sync", "cohorts", "triple_whale_cohorts_sync_interval", expects_rows=False),
+        _health("pages", "Pages sync", "pages", "triple_whale_pages_sync_interval", expects_rows=False),
+    ],
 }
