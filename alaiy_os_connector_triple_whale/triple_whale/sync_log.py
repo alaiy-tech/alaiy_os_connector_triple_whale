@@ -11,6 +11,12 @@ Logs list depend on log status being accurate even when a sync throws.
 import frappe
 from frappe.utils import now_datetime
 
+try:
+    from alaiy_os.health.runs import run_status
+except ImportError:  # core without Connector Health: keep the old behaviour
+    def run_status(processed, failed, skipped=0, error=None):
+        return "success"
+
 
 def get_or_create_log(sync_type, trigger, log_name=None):
     """
@@ -57,7 +63,11 @@ def run_logged(sync_type, trigger, log_name, worker):
     _mark_running(log)
     try:
         worker(log)
-        _mark_finished(log, "success")
+        processed = getattr(log, "items_processed", 0) or 0
+        failed = getattr(log, "items_failed", 0) or 0
+        status = run_status(processed, failed, 0)
+        message = f"Every item failed ({failed}); see the log." if status == "failed" else None
+        _mark_finished(log, status, message)
     except Exception:
         _mark_finished(log, "failed", frappe.get_traceback())
         frappe.log_error(
